@@ -403,7 +403,7 @@
             <label class="radio-card">
                 <input type="radio" name="printType" value="summary"> 
                 <div class="icon">📋</div>
-                <div class="label" data-i18n="opt_summary">ใบสรยอด</div>
+                <div class="label" data-i18n="opt_summary">ใบสรุปยอด</div>
                 <div class="check-badge">✓</div>
             </label>
             <label class="radio-card">
@@ -923,12 +923,12 @@
                         let shipHtml = '';
                         
                         if(isEco8) {
-                            // โครงสร้างสำหรับ Eco 8-in-1 ป้องกันล้นกรอบและอักษรใหญ่ขึ้น
+                            // โครงสร้างสำหรับ Eco 8-in-1 ปลดล็อคความยาวที่อยู่ผู้ส่งแล้ว
                             shipHtml = `
                             <div class="shipping-box" style="padding: 0.8em; border-width: 2px;">
                                 <div class="border-b" style="font-size:1em; border-bottom:none; line-height: 1.2; margin-bottom: 2px;">
                                     <strong style="font-size:1.1em;">${txt.from}</strong><br>
-                                    <span style="white-space:pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${senderAddr}</span>
+                                    <span style="white-space:pre-wrap; word-break: break-word;">${senderAddr}</span>
                                 </div>
                                 
                                 <div style="border-bottom:2px solid #000; margin: 4px 0 6px 0; width:100%;"></div>
@@ -936,7 +936,7 @@
                                 <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; overflow: hidden;">
                                     <div style="font-size:var(--font-xl); font-weight:bold; line-height: 1.1;">${txt.to}</div>
                                     <div style="font-size:var(--font-lg); font-weight:bold; margin:2px 0; line-height: 1.2;">${name}</div>
-                                    <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word; line-height: 1.3; overflow: hidden; text-overflow: ellipsis;">${address}</div>
+                                    <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word; line-height: 1.3;">${address}</div>
                                     ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:4px;">📞 ${tel}</div>` : ''}
                                 </div>
                                 
@@ -946,12 +946,12 @@
                                 </div>
                             </div>`;
                         } else {
-                            // โครงสร้างปกติ
+                            // โครงสร้างปกติ ปลดล็อคความยาวที่อยู่ผู้ส่งแล้วเช่นกัน
                             shipHtml = `
                             <div class="shipping-box">
                                 <div class="border-b" style="font-size:0.9em; border-bottom:none;">
                                     <strong>${txt.from}</strong><br>
-                                    <span style="white-space:pre-wrap;">${senderAddr}</span>
+                                    <span style="white-space:pre-wrap; word-break: break-word;">${senderAddr}</span>
                                 </div>
                                 
                                 <div style="border-bottom:4px solid #000; margin: 10px 0 15px 0; width:100%;"></div>
