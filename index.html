@@ -712,9 +712,7 @@
             const txt = I18N[currentLang];
             return `
             <div class="packing-footer-row">
-                <div style="flex: 1; text-align: left;">
-                    <a href="https://www.homu.in.th/" target="_blank" class="powered-link">POWERED BY HOMU.IN.TH</a>
-                </div>
+                <div style="flex: 1;"></div>
                 <div style="flex: 1; text-align: center;">
                     <span class="seq-text">${txt.page} #${seq}</span>
                 </div>
@@ -854,7 +852,7 @@
                             <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
                                 <div style="font-size:var(--font-xl); font-weight:bold;">${txt.to}</div>
                                 <div style="font-size:var(--font-lg); font-weight:bold; margin:0.2em 0;">${name}</div>
-                                <div style="font-size:var(--font-base); white-space:pre-wrap;">${address}</div>
+                                <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word;">${address}</div>
                                 ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:0.5em;">📞 ${tel}</div>` : ''}
                             </div>
                             
@@ -866,7 +864,6 @@
                         cardsBuffer.push(shipHtml);
                     }
 
-                    // Packing Card (with Pagination)
                     // Packing Card (with Pagination)
                     if(doPacking) {
                         // --- แก้ไขจำนวนสินค้าต่อหน้า (Logic ใหม่) ---
@@ -919,7 +916,7 @@
                                 </div>
                                 <div class="border-b flex-between" style="padding:0.5em; font-size:0.9em;">
                                     <div style="font-weight:bold; max-width:65%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
-                                    <div class="text-primary font-bold">${tel ? txt.tel + ' ' + tel : ''}</div>
+                                    <div style="font-weight:bold; color:#333;">${tel ? txt.tel + ' ' + tel : ''}</div>
                                 </div>
                                 ${contentHtml}
                                 ${summaryHtml}
