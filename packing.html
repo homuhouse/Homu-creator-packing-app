@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Creator Packing & Shipping</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --primary: #ff9eb5;
+            --primary-dark: #ec4899;
+            --bg-page: #fff0f5;
+            --text-main: #333;
+            --template-green: #36c6b5;
+            --header-bg: #ff9eb5;
+            --header-text: #ffffff;
+            --page-width: 100mm;
+            --page-height: 147mm;
+            --font-base: 12px;
+            --font-lg: 16px;
+            --font-xl: 20px;
+            --img-size: 40px;
+            --padding-card: 4mm;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg-page); margin: 0; padding: 20px; color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; }
+        .hidden { display: none !important; }
+        a { color: inherit; text-decoration: none; }
+
+        /* --- Containers --- */
+        .container {
+            max-width: 700px; margin: 0 auto; background: white;
+            padding: 25px; border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-top: 8px solid var(--primary);
+            width: 100%; position: relative;
+        }
+        
+        /* Language Switcher */
+        .lang-switch {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 5px; background: #f0f0f0;
+            padding: 4px; border-radius: 20px;
+        }
+        .lang-btn {
+            border: none; background: none; padding: 5px 10px;
+            border-radius: 15px; cursor: pointer; font-size: 12px; font-weight: bold; color: #888;
+            transition: 0.2s;
+        }
+        .lang-btn.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        h1 { margin: 0; font-size: 24px; color: #333; line-height: 1.2; padding-right: 80px; }
+        .subtitle { font-size: 12px; color: #888; font-weight: 500; letter-spacing: 0.5px; }
+        h2 { font-size: 18px; margin: 25px 0 10px 0; color: #555; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+
+        /* --- Inputs --- */
+        input[type="text"], textarea {
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
+            font-size: 16px; outline: none; font-family: 'Sarabun', sans-serif;
+        }
+        input[type="text"]:focus, textarea:focus { border-color: var(--primary-dark); }
+
+        .color-picker-group {
+            display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;
+            background: #f9f9f9; padding: 10px; border-radius: 8px; border: 1px solid #eee;
+        }
+        .color-item { display: flex; align-items: center; gap: 5px; margin-right: 10px; }
+        .color-label { font-size: 13px; font-weight: bold; color: #555; }
+        
+        /* Color Picker Style (Gray Border) */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: 1px solid #cccccc; /* ขอบสีเทาจางๆ */
+            width: 32px; height: 32px;
+            cursor: pointer; background: white; padding: 2px;
+            border-radius: 50%;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        .highlight-option {
+            margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ddd;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .highlight-label { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #333; font-weight: bold; cursor: pointer; }
+        .highlight-label input { width: 18px; height: 18px; accent-color: var(--primary-dark); }
+
+        /* --- Radio Cards --- */
+        .radio-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (min-width: 600px) { .radio-grid { grid-template-columns: repeat(3, 1fr); } }
+
+        .radio-card {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px solid #eee; padding: 15px; border-radius: 12px;
+            cursor: pointer; background: white; text-align: center; position: relative;
+            transition: all 0.2s; height: 100%; min-height: 110px;
+        }
+        .radio-card input { position: absolute; opacity: 0; width: 0; height: 0; }
+        
+        .radio-card:has(input:checked) {
+            border-color: var(--primary-dark); background-color: #fff9fb; color: var(--primary-dark);
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.15);
+        }
+        
+        .radio-card .icon { font-size: 28px; margin-bottom: 5px; }
+        .radio-card .label { font-weight: bold; font-size: 14px; }
+        .radio-card .sub { font-size: 11px; color: #888; margin-top: 2px; line-height: 1.2; }
+        
+        .check-badge {
+            position: absolute; top: 5px; right: 5px; background: var(--primary-dark); color: white;
+            border-radius: 50%; width: 20px; height: 20px; font-size: 12px; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transform: scale(0); transition: all 0.2s;
+        }
+        .radio-card:has(input:checked) .check-badge { opacity: 1; transform: scale(1); }
+
+        /* --- Upload & Template --- */
+        .upload-box {
+            border: 2px dashed #ccc; border-radius: 12px; padding: 20px;
+            text-align: center; background: #fafafa; position: relative; transition: 0.2s;
+        }
+        .upload-box:hover { border-color: var(--primary-dark); background: #fff0f5; }
+        .upload-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        .template-btn {
+            display: inline-block; background: var(--template-green); color: white; padding: 10px 20px; 
+            border-radius: 30px; text-decoration: none; font-size: 14px; font-weight: bold;
+            margin-bottom: 8px; box-shadow: 0 3px 8px rgba(54, 198, 181, 0.3); transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .template-btn:hover { background: #2bb0a0; transform: translateY(-2px); box-shadow: 0 5px 12px rgba(54, 198, 181, 0.4); }
+
+        /* --- Buttons --- */
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn {
+            flex: 1; padding: 15px; border: none; border-radius: 12px;
+            font-weight: bold; font-size: 18px; color: white; cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.1s;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-generate { background-color: var(--template-green); }
+        .btn-generate:hover { background-color: #2bb0a0; box-shadow: 0 6px 12px rgba(54, 198, 181, 0.4); }
+        .btn-print { background-color: #333; }
+        .btn-print-bottom { background-color: #333; margin-top: 30px; width: 100%; max-width: 700px; margin-left: auto; margin-right: auto; }
+
+        /* --- Footer / Support Section --- */
+        .footer-section { text-align: center; margin-top: 40px; padding-bottom: 30px; color: #888; }
+        .footer-title { font-size: 14px; font-weight: bold; color: #666; margin-bottom: 10px; }
+        .footer-socials { display: flex; gap: 20px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap;}
+        .footer-social-link {
+            display: flex; align-items: center; gap: 5px;
+            text-decoration: none; color: #888; font-size: 13px; font-weight: 500; transition: 0.2s;
+        }
+        .footer-social-link:hover { color: var(--primary-dark); }
+        .footer-social-link svg { width: 18px; height: 18px; fill: currentColor; }
+
+        /* --- Warnings --- */
+        .print-warning {
+            background: #fffbeb; border: 1px solid #fcd34d; color: #854d0e;
+            padding: 12px; border-radius: 8px; font-size: 13px; text-align: left;
+            margin-top: 15px; line-height: 1.6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .print-warning strong { color: #b45309; }
+        .warning-icon { float: left; font-size: 20px; margin-right: 10px; }
+
+
+        /* --- PRINT STYLES --- */
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; padding: 0; margin: 0; }
+            @page { margin: 0; }
+            .print-area { display: block !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+
+        .print-area { display: none; }
+        
+        /* Single Page */
+        .page-sheet {
+            width: var(--page-width); height: var(--page-height);
+            background: white; margin: 0 auto;
+            position: relative; overflow: hidden;
+            box-sizing: border-box; padding: var(--padding-card);
+            page-break-after: always;
+            border: 1px solid #eee; font-size: var(--font-base);
+        }
+        @media print { .page-sheet { border: none; margin: 0; } }
+
+        /* Eco Mode Grid */
+        .a4-grid-container {
+            width: 210mm; height: 296mm; background: white; margin: 0 auto;
+            display: grid; page-break-after: always; box-sizing: border-box; border: 1px solid #eee; 
+        }
+        .grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+        .grid-8 { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); }
+        @media print { .a4-grid-container { border: none; margin: 0; } }
+
+        .a4-grid-item {
+            position: relative; padding: 5mm; border: 1px dashed #ccc; overflow: hidden;
+            display: flex; flex-direction: column; font-size: 11px; height: 100%;
+        }
+        
+        .a4-grid-item .shipping-box,
+        .a4-grid-item .packing-box {
+            flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%; box-sizing: border-box;
+        }
+
+        /* 8-in-1 Adjustments */
+        .grid-8 .a4-grid-item { padding: 3mm; font-size: 10px; }
+        .grid-8 .img-size { width: 30px; height: 30px; }
+        .grid-8 .order-id-big { font-size: 1.5em; }
+        .grid-8 .packing-header { padding: 0.4em; }
+
+        /* --- CONTENT STYLES --- */
+        .order-id-big { font-size: 2em; font-weight: 900; line-height: 0.9; margin-top: 2px; }
+
+        .page-indicator {
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            color: var(--header-text); font-weight: bold; font-size: 1.1em; opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .border-b { border-bottom: 1px solid #eee; padding-bottom: 0.5em; margin-bottom: 0.5em; }
+        .text-primary { color: var(--primary-dark); }
+        
+        .shipping-box {
+            height: 100%; border: 2px solid #333; border-radius: 8px;
+            padding: 1em; display: flex; flex-direction: column; justify-content: space-between;
+            position: relative; box-sizing: border-box;
+        }
+
+        .packing-box {
+            height: 100%; border: 1px solid #ddd; border-radius: 8px;
+            display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box;
+        }
+        
+        .packing-header { 
+            background-color: var(--header-bg); color: var(--header-text); 
+            padding: 0.8em; position: relative; flex-shrink: 0;
+        }
+        
+        .packing-content { flex-grow: 1; padding: 0.5em; overflow: hidden; }
+
+        .item-row { 
+            display: flex; align-items: center; padding: 0.35em 0; 
+            padding-right: 15px; border-bottom: 1px dashed #ccc; 
+        }
+        .item-row[style*="background"] { border-bottom: 1px dashed #999; }
+
+        .item-row img {
+            width: var(--img-size); height: var(--img-size);
+            object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-right: 0.8em;
+        }
+        
+        /* Footer */
+        .packing-footer-row {
+            background: #fafafa;
+            padding: 10px 12px; /* เพิ่ม Padding ให้ไม่ชิดขอบ */
+            border-top: 1px solid #ddd;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            flex-shrink: 0;
+            height: 40px; /* Fix ความสูง Footer */
+        }
+
+        .powered-link {
+            text-decoration: none !important; color: #ccc !important; 
+            letter-spacing: 0.5px; font-size: 0.7em; font-weight: bold;
+        }
+        .seq-text { color: #888; font-size: 0.8em; font-weight: bold; }
+
+        .packing-totals {
+    background: #fafafa; padding: 0.5em; border-top: 1px solid #ddd; flex-shrink: 0;
+    margin-top: auto;  /* <--- เติมบรรทัดนี้ครับ */
+}
+
+        /* Summary Page */
+        .summary-page { width: 100%; height: 100%; background: white; padding: var(--padding-card); font-size: var(--font-base); display: flex; flex-direction: column;}
+        .summary-content { padding: 0.5em; flex-grow: 1; }
+        .summary-table { width: 100%; border-collapse: collapse; margin-top: 1em; table-layout: fixed; }
+        .summary-table th { background: #f3f4f6; text-align: left; padding: 0.8em; border-bottom: 2px solid #ccc; font-weight: bold; }
+        .summary-table th.col-qty { text-align: center; width: 25%; }
+        .summary-table td { padding: 0.6em 0.8em; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .summary-table td.cell-qty { text-align: center; font-weight: bold; font-size: 1.2em; }
+        .summary-img { width: 30px; height: 30px; object-fit: cover; vertical-align: middle; margin-right: 10px; border-radius: 4px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container no-print">
+        <div class="lang-switch">
+            <button class="lang-btn active" id="btn-th" onclick="setLang('th')">TH</button>
+            <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+        </div>
+
+        <div class="flex-between">
+            <div>
+                <h1>Creator Packing & Shipping</h1>
+                <div class="subtitle">powered by <a href="https://www.homu.in.th" target="_blank">HOMU.IN.TH</a></div>
+            </div>
+        </div>
+
+        <h2 data-i18n="step1">1. ตั้งค่าร้าน & สีธีม</h2>
+        <div style="margin-bottom: 15px;">
+            <input type="text" id="headerBrand" placeholder="ชื่อร้าน (เช่น HOMU.IN.TH)" style="margin-bottom:10px;" data-i18n-ph="ph_brand">
+            <input type="text" id="headerTagline" placeholder="คำโปรย (เช่น ขอบคุณที่อุดหนุน)" data-i18n-ph="ph_tagline">
+        </div>
+
+        <div class="color-picker-group">
+            <div class="color-item">
+                <div class="color-label" data-i18n="label_bg">พื้นหลังหัว:</div>
+                <input type="color" id="colorBg" value="#ff9eb5" onchange="updateColors()">
+            </div>
+            <div class="color-item">
+                <div class="color-label" data-i18n="label_text">ตัวอักษร:</div>
+                <input type="color" id="colorText" value="#ffffff" onchange="updateColors()">
+            </div>
+        </div>
+        
+        <div class="highlight-option">
+            <label class="highlight-label">
+                <input type="checkbox" id="doHighlight" checked> 
+                <span data-i18n="chk_highlight">ไฮไลท์แถวที่จำนวนสินค้ามากกว่า 1</span>
+            </label>
+            <div style="display:flex; align-items:center; gap:5px;">
+                <span style="font-size:12px; color:#666;" data-i18n="label_hl">สีไฮไลท์:</span>
+                <input type="color" id="colorHighlight" value="#ffffff" style="border:1px solid #ccc; width:25px; height:25px; cursor:pointer;">
+            </div>
+        </div>
+
+        <h2 data-i18n="step2">2. เลือกขนาดกระดาษ</h2>
+        <div class="radio-grid" style="margin-bottom:15px;">
+            <label class="radio-card">
+                <input type="radio" name="paperSize" value="a6" checked onchange="updateUI()">
+                <div class="icon">📱</div>
+                <div class="label">A6</div>
+                <div class="sub">105x148mm</div>
+                <div class="check-badge">✓</div>
+            </label>
+            <label class="radio-card">
+                <input type="radio" name="paperSize" value="a5" onchange="updateUI()">
+                <div class="icon">📖</div>
+                <div class="label">A5</div>
+                <div class="sub">148x210mm</div>
+                <div class="check-badge">✓</div>
+            </label>
+            <label class="radio-card">
+                <input type="radio" name="paperSize" value="a4" onchange="updateUI()">
+                <div class="icon">📄</div>
+                <div class="label">A4</div>
+                <div class="sub">210x297mm</div>
+                <div class="check-badge">✓</div>
+            </label>
+            
+            <label class="radio-card eco-card">
+                <input type="radio" name="paperSize" value="eco4" onchange="updateUI()">
+                <div class="icon">🌱</div>
+                <div class="label">Eco 4-in-1</div>
+                <div class="sub" data-i18n="eco4_sub">A4 (4 ใบ)</div>
+                <div class="check-badge">✓</div>
+            </label>
+
+            <label class="radio-card eco-card">
+                <input type="radio" name="paperSize" value="eco8" onchange="updateUI()">
+                <div class="icon">🍃</div>
+                <div class="label">Eco 8-in-1</div>
+                <div class="sub" style="font-size:10px;" data-i18n="eco8_sub">A4 (8ใบเล็ก เหมาะสำหรับจ่าหน้า)</div>
+                <div class="check-badge">✓</div>
+            </label>
+        </div>
+
+        <h2 data-i18n="step3">3. เลือกสิ่งที่ต้องการพิมพ์</h2>
+        <div class="radio-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+            <label class="radio-card">
+                <input type="radio" name="printType" value="packing" checked>
+                <div class="icon">📦</div>
+                <div class="label" data-i18n="opt_packing">ใบเช็คของ</div>
+                <div class="check-badge">✓</div>
+            </label>
+            <label class="radio-card">
+                <input type="radio" name="printType" value="summary"> 
+                <div class="icon">📋</div>
+                <div class="label" data-i18n="opt_summary">ใบสรุปยอด</div>
+                <div class="check-badge">✓</div>
+            </label>
+            <label class="radio-card">
+                <input type="radio" name="printType" value="shipping">
+                <div class="icon">🚚</div>
+                <div class="label" data-i18n="opt_shipping">จ่าหน้าที่อยู่</div>
+                <div class="check-badge">✓</div>
+            </label>
+        </div>
+        
+        <div id="senderZone" style="margin-top:15px; display:none;">
+            <textarea id="senderAddress" rows="3" placeholder="📍 ที่อยู่ผู้ส่ง (สำหรับใบปะหน้า)..." data-i18n-ph="ph_sender"></textarea>
+        </div>
+
+        <h2 data-i18n="step4">4. นำเข้าข้อมูล</h2>
+        <div style="text-align:center; margin-bottom:20px;">
+            <a href="https://docs.google.com/spreadsheets/d/1oI5WeAnuf5rxJ3QbjUjAdFoWTGKpDzPbSQNrR-cl3dg/edit?usp=sharing" target="_blank" class="template-btn">
+                <span data-i18n="btn_dl">📥 ดาวน์โหลด Template (Excel)</span>
+            </a>
+            <div style="font-size:12px; color:#666;">
+                (ไปที่เมนู <strong>File > Make a copy</strong> หรือ <strong>Download > Microsoft Excel (.xlsx)</strong>)
+            </div>
+        </div>
+
+        <div class="upload-box">
+            <input type="file" id="excelFile" accept=".xlsx, .xls" class="upload-input">
+            <div style="font-size:24px;">📂</div>
+            <div data-i18n="txt_upload">จิ้มเลือกไฟล์ Excel</div>
+            <div id="fileName" style="color:green; font-weight:bold; font-size:12px; margin-top:5px;"></div>
+        </div>
+
+        <div id="imgSection" class="hidden" style="margin-top:20px;">
+            <h2 data-i18n="step5">5. รูปสินค้า</h2>
+            <div id="imgContainer"></div>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="generateDocs()" class="btn btn-generate" data-i18n="btn_gen">📄 สร้างเอกสาร</button>
+            <button onclick="window.print()" class="btn btn-print hidden" id="topPrintBtn" data-i18n="btn_print">🖨️ สั่งพิมพ์</button>
+        </div>
+        
+        <div class="print-warning hidden" id="topPrintWarning">
+            <div class="warning-icon">⚠️</div>
+            <div data-i18n="warning_print">
+                <strong>สำคัญ: ตั้งค่าเครื่องพิมพ์ก่อนเสมอ!</strong><br>
+                1. กด More Settings > Paper Size เลือก <strong><span id="warnSizeName">A6</span></strong> <span id="warnSizeDim">(105x148 mm)</span><br>
+                2. หากไม่มีไซส์ให้เลือก <strong>'Custom'</strong> หรือ <strong>'User Defined'</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="container no-print" style="margin-top:20px; text-align:center;">
+        <div style="color:#aaa; margin-bottom:10px;">--- <span data-i18n="txt_preview">ตัวอย่าง (Preview)</span> ---</div>
+        <div id="previewWrapper" style="display:inline-block; transform-origin: top center;">
+            <div id="previewOutput">
+                <div style="padding:40px; color:#ccc;" data-i18n="txt_not_gen">ยังไม่ได้สร้างเอกสาร</div>
+            </div>
+        </div>
+        
+        <button onclick="window.print()" class="btn btn-print btn-print-bottom hidden" id="bottomPrintBtn" data-i18n="btn_print_all">🖨️ สั่งพิมพ์เอกสารทั้งหมด</button>
+        
+        <div class="print-warning hidden" id="bottomPrintWarning" style="margin-top:15px; margin-bottom: 30px;">
+            <div class="warning-icon">⚠️</div>
+            <div data-i18n="warning_bottom">
+                <strong>คำแนะนำการพิมพ์:</strong><br>
+                เลือกขนาดกระดาษ <strong><span id="warnSizeName2">A6</span></strong><br>
+                เพื่อให้เอกสารพอดีกับกระดาษ ไม่ตกขอบ
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-section no-print">
+        <div class="footer-title">สอบถาม แนะนำเพิ่มเติม ติดต่อ</div>
+        <div class="footer-socials">
+            <a href="https://www.homu.in.th/" target="_blank" class="footer-social-link">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                homu.in.th
+            </a>
+            <a href="https://twitter.com/homuinth" target="_blank" class="footer-social-link">
+                <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                @homuinth
+            </a>
+            <a href="https://m.me/homuinth" target="_blank" class="footer-social-link">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.03 2 11c0 2.87 1.56 5.42 3.99 7.03V22l3.63-1.99c1.3.36 2.68.55 4.38.55 5.52 0 10-4.03 10-9S17.52 2 12 2zm1 13.5l-2.5-2.7-4.8 2.7 5.3-5.6 2.5 2.7 4.8-2.7-5.3 5.6z"/></svg>
+                @homuinth
+            </a>
+            <a href="mailto:support@homu.in.th" class="footer-social-link">
+                <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                support@homu.in.th
+            </a>
+        </div>
+    </div>
+
+    <div id="printOutput" class="print-area"></div>
+
+    <script>
+        // CONFIG
+        const PAPER_CONFIG = {
+            'a6': { name: 'A6', dim: '(105x148 mm)', width: '100mm', height: '140mm', fontBase: '12px', fontLg: '16px', fontXl: '20px', imgSize: '40px', padding: '4mm' },
+            'a5': { name: 'A5', dim: '(148x210 mm)', width: '140mm', height: '195mm', fontBase: '14px', fontLg: '20px', fontXl: '26px', imgSize: '60px', padding: '8mm' },
+            'a4': { name: 'A4', dim: '(210x297 mm)', width: '190mm', height: '280mm', fontBase: '18px', fontLg: '24px', fontXl: '32px', imgSize: '80px', padding: '12mm' },
+            'eco4': { name: 'A4', dim: '(210x297 mm)', width: '100mm', height: '147mm', fontBase: '12px', fontLg: '16px', fontXl: '20px', imgSize: '35px', padding: '4mm' },
+            'eco8': { name: 'A4', dim: '(210x297 mm)', width: '100mm', height: '74mm', fontBase: '10px', fontLg: '14px', fontXl: '16px', imgSize: '30px', padding: '3mm' }
+        };
+
+        // Translations Dictionary
+        const I18N = {
+            th: {
+                step1: "1. ตั้งค่าร้าน & สีธีม",
+                ph_brand: "ชื่อร้าน (เช่น HOMU.IN.TH)",
+                ph_tagline: "คำโปรย (เช่น ขอบคุณที่อุดหนุน)",
+                label_bg: "พื้นหลังหัว:",
+                label_text: "ตัวอักษร:",
+                chk_highlight: "ไฮไลท์แถวที่จำนวนสินค้ามากกว่า 1",
+                label_hl: "สีไฮไลท์:",
+                step2: "2. เลือกขนาดกระดาษ",
+                eco4_sub: "A4 (4 ใบ)",
+                eco8_sub: "A4 (8ใบเล็ก เหมาะสำหรับจ่าหน้า)",
+                step3: "3. เลือกสิ่งที่ต้องการพิมพ์",
+                opt_packing: "ใบเช็คของ",
+                opt_summary: "ใบสรุปยอด",
+                opt_shipping: "จ่าหน้าที่อยู่",
+                ph_sender: "📍 ที่อยู่ผู้ส่ง (สำหรับใบจ่าหน้า)...",
+                step4: "4. นำเข้าข้อมูล",
+                btn_dl: "📥 ดาวน์โหลด Template (Excel)",
+                txt_upload: "จิ้มเลือกไฟล์ Excel",
+                step5: "5. รูปสินค้า",
+                btn_gen: "📄 สร้างเอกสาร",
+                btn_print: "🖨️ สั่งพิมพ์",
+                btn_print_all: "🖨️ สั่งพิมพ์เอกสารทั้งหมด",
+                txt_preview: "ตัวอย่าง (Preview)",
+                txt_not_gen: "ยังไม่ได้สร้างเอกสาร",
+                warning_print: "<strong>สำคัญ: ตั้งค่าเครื่องพิมพ์ก่อนเสมอ!</strong><br>1. กด More Settings > Paper Size เลือก <strong><span id='warnSizeName'>A6</span></strong> <span id='warnSizeDim'>(105x148 mm)</span><br>2. หากไม่มีไซส์ให้เลือก <strong>'Custom'</strong> หรือ <strong>'User Defined'</strong>",
+                warning_bottom: "<strong>คำแนะนำการพิมพ์:</strong><br>เลือกขนาดกระดาษ <strong><span id='warnSizeName2'>A6</span></strong><br>เพื่อให้เอกสารพอดีกับกระดาษ ไม่ตกขอบ",
+                // Dynamic
+                from: "FROM (ผู้ส่ง):",
+                to: "TO (ผู้รับ):",
+                tel: "โทร",
+                page: "ใบที่",
+                ref: "Ref Order:",
+                total_qty: "รวมจำนวน",
+                unit: "ชิ้น",
+                summary_title: "📄 สรุปรายการ (Pick List)",
+                col_item: "ชื่อสินค้า",
+                col_qty: "จำนวน",
+                grand_total: "รวมทั้งหมด",
+                next_page: "... มีต่อหน้าถัดไป ..."
+            },
+            en: {
+                step1: "1. Shop Settings & Theme",
+                ph_brand: "Shop Name (e.g. HOMU)",
+                ph_tagline: "Tagline (e.g. Thank you)",
+                label_bg: "Header BG:",
+                label_text: "Text Color:",
+                chk_highlight: "Highlight rows with qty > 1",
+                label_hl: "Highlight:",
+                step2: "2. Select Paper Size",
+                eco4_sub: "A4 (4-up)",
+                eco8_sub: "A4 (8-up for Shipping Labels)",
+                step3: "3. Select Print Type",
+                opt_packing: "Packing List",
+                opt_summary: "Summary List",
+                opt_shipping: "Shipping Label",
+                ph_sender: "📍 Sender Address...",
+                step4: "4. Import Data",
+                btn_dl: "📥 Download Template (Excel)",
+                txt_upload: "Click to upload Excel",
+                step5: "5. Product Images",
+                btn_gen: "📄 Generate Docs",
+                btn_print: "🖨️ Print",
+                btn_print_all: "🖨️ Print All Docs",
+                txt_preview: "Preview",
+                txt_not_gen: "No documents generated",
+                warning_print: "<strong>Important: Printer Settings</strong><br>1. More Settings > Paper Size > Select <strong><span id='warnSizeName'>A6</span></strong> <span id='warnSizeDim'>(105x148 mm)</span><br>2. If unavailable, choose <strong>'Custom'</strong>",
+                warning_bottom: "<strong>Printing Tip:</strong><br>Select Paper Size <strong><span id='warnSizeName2'>A6</span></strong><br>to ensure it fits correctly.",
+                // Dynamic
+                from: "FROM:",
+                to: "TO:",
+                tel: "Tel",
+                page: "Page",
+                ref: "Ref Order:",
+                total_qty: "Total Qty",
+                unit: "pcs",
+                summary_title: "📄 Pick List Summary",
+                col_item: "Item Name",
+                col_qty: "Qty",
+                grand_total: "Grand Total",
+                next_page: "... Continued next page ..."
+            }
+        };
+
+        const ITEMS_PER_PAGE_A6 = 6; 
+        const ITEMS_PER_PAGE_ECO8 = 3; 
+
+        let excelData = [];
+        let productColumns = [];
+        let productImages = {};
+        let currentLang = 'th';
+        const PRODUCT_START_INDEX = 5; 
+
+        function setLang(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + lang).classList.add('active');
+            
+            // Update Text
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(I18N[lang][key]) el.innerHTML = I18N[lang][key];
+            });
+            // Update Placeholders
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if(I18N[lang][key]) el.placeholder = I18N[lang][key];
+            });
+            
+            updateUI(); // Refresh UI texts like Paper size warning
+        }
+
+        // Update UI Logic
+        function updateColors() {
+            const bg = document.getElementById('colorBg').value;
+            const txt = document.getElementById('colorText').value;
+            document.documentElement.style.setProperty('--header-bg', bg);
+            document.documentElement.style.setProperty('--header-text', txt);
+        }
+
+        function updateUI() {
+            // Check Radio Value for Shipping
+            const printType = document.querySelector('input[name="printType"]:checked').value;
+            const doShip = (printType === 'shipping');
+            document.getElementById('senderZone').style.display = doShip ? 'block' : 'none';
+
+            const sizeKey = document.querySelector('input[name="paperSize"]:checked').value;
+            const config = PAPER_CONFIG[sizeKey];
+            
+            // Re-inject warnings to ensure IDs exist for dynamic updates
+            const warnBox = document.getElementById('topPrintWarning');
+            const warnBox2 = document.getElementById('bottomPrintWarning');
+            // We just re-render warning HTML based on lang first, then update ID content
+            // Note: simple innerText update is enough for the spans
+            
+            const sizeNameSpans = document.querySelectorAll('#warnSizeName, #warnSizeName2');
+            const sizeDimSpans = document.querySelectorAll('#warnSizeDim');
+            
+            sizeNameSpans.forEach(el => el.innerText = config.name);
+            sizeDimSpans.forEach(el => el.innerText = config.dim);
+            
+            updatePreviewScale();
+        }
+        
+        // Listen to all radios with name="printType"
+        document.querySelectorAll('input[name="printType"]').forEach(radio => {
+            radio.addEventListener('change', updateUI);
+        });
+
+        // Excel Logic
+        document.getElementById('excelFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            document.getElementById('fileName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                excelData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+                if(excelData.length) createImgInputs(excelData[0]);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function createImgInputs(headers) {
+            const container = document.getElementById('imgContainer');
+            container.innerHTML = '';
+            productColumns = [];
+            for(let i=PRODUCT_START_INDEX; i<headers.length; i++) {
+                let pName = headers[i];
+                if(pName) {
+                    productColumns.push({ index: i, name: pName.trim() });
+                    let div = document.createElement('div');
+                    div.style.cssText = "display:flex; justify-content:space-between; align-items:center; border:1px solid #eee; padding:10px; margin-bottom:5px; border-radius:8px;";
+                    div.innerHTML = `
+                        <div style="font-size:12px; width:50%; overflow:hidden; text-overflow:ellipsis;">${pName}</div>
+                        <label style="border:1px dashed #ec4899; color:#ec4899; padding:5px 10px; border-radius:4px; font-size:11px; cursor:pointer;">
+                            + รูป
+                            <input type="file" accept="image/*" class="hidden" onchange="handleImg(this, ${i})">
+                        </label>
+                        <img id="img-${i}" class="hidden" style="width:30px; height:30px; object-fit:cover; border-radius:4px; margin-left:10px;">
+                    `;
+                    container.appendChild(div);
+                }
+            }
+            if(productColumns.length) document.getElementById('imgSection').classList.remove('hidden');
+        }
+
+        function handleImg(input, index) {
+            if(input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    productImages[index] = e.target.result;
+                    let imgEl = document.getElementById(`img-${index}`);
+                    imgEl.src = e.target.result;
+                    imgEl.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function chunkArray(myArray, chunk_size){
+            var index = 0;
+            var arrayLength = myArray.length;
+            var tempArray = [];
+            for (index = 0; index < arrayLength; index += chunk_size) {
+                var myChunk = myArray.slice(index, index+chunk_size);
+                tempArray.push(myChunk);
+            }
+            return tempArray;
+        }
+
+        function getFooterHtml(seq) {
+            const txt = I18N[currentLang];
+            return `
+            <div class="packing-footer-row">
+                <div style="flex: 1; text-align: left;">
+                    <a href="https://www.homu.in.th/" target="_blank" class="powered-link">POWERED BY HOMU.IN.TH</a>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <span class="seq-text">${txt.page} #${seq}</span>
+                </div>
+                <div style="flex: 1;"></div>
+            </div>`;
+        }
+
+        // --- MAIN GENERATE LOGIC ---
+        function generateDocs() {
+            // New Radio Logic
+            const printType = document.querySelector('input[name="printType"]:checked').value;
+            const doSummary = (printType === 'summary');
+            const doShipping = (printType === 'shipping');
+            const doPacking = (printType === 'packing');
+            
+            const doHighlight = document.getElementById('doHighlight').checked;
+            const hlColor = document.getElementById('colorHighlight').value;
+            
+            const paperSize = document.querySelector('input[name="paperSize"]:checked').value;
+            const isEcoMode = (paperSize.startsWith('eco'));
+            const isEco8 = (paperSize === 'eco8');
+
+            const txt = I18N[currentLang]; // Get current language strings
+
+            if (excelData.length === 0) {
+                alert("กรุณาอัปโหลดไฟล์ Excel ก่อนครับ");
+                return;
+            }
+
+            const config = PAPER_CONFIG[paperSize];
+            const root = document.documentElement;
+            root.style.setProperty('--page-width', config.width);
+            root.style.setProperty('--page-height', config.height);
+            root.style.setProperty('--font-base', config.fontBase);
+            root.style.setProperty('--font-lg', config.fontLg);
+            root.style.setProperty('--font-xl', config.fontXl);
+            root.style.setProperty('--img-size', config.imgSize);
+            root.style.setProperty('--padding-card', config.padding);
+            updateColors();
+            updateUI(); 
+
+            const headerBrand = document.getElementById('headerBrand').value || 'HOMU.IN.TH';
+            const headerTagline = document.getElementById('headerTagline').value || '';
+            const senderAddr = document.getElementById('senderAddress').value || '-';
+
+            let globalSummary = {};
+            productColumns.forEach(prod => { globalSummary[prod.name] = 0; });
+            
+            let cardsBuffer = []; 
+
+            // A. Summary Card
+            if(doSummary) {
+                for(let i=1; i<excelData.length; i++) {
+                    let row = excelData[i];
+                    if(!row || !row[1] || row[1].toString().trim() === "") continue;
+                    productColumns.forEach(prod => {
+                        let qty = parseFloat(row[prod.index]);
+                        if(qty > 0) globalSummary[prod.name] += qty;
+                    });
+                }
+
+                let grandTotal = 0;
+                for(let key in globalSummary) { grandTotal += globalSummary[key]; }
+
+                if(grandTotal > 0) {
+                    let summaryRows = '';
+                    Object.keys(globalSummary).sort().forEach(name => {
+                        let qty = globalSummary[name];
+                        if(qty > 0) {
+                            let colWithImage = productColumns.find(col => col.name === name && productImages[col.index]);
+                            let imgUrl = colWithImage ? productImages[colWithImage.index] : '';
+                            let imgTag = imgUrl ? `<img src="${imgUrl}" class="summary-img">` : '';
+                            summaryRows += `<tr><td>${imgTag} ${name}</td><td class="cell-qty">${qty}</td></tr>`;
+                        }
+                    });
+
+                    let summaryCard = `
+                    <div class="summary-page">
+                        <div style="text-align:center; border-bottom:4px solid var(--header-bg); padding-bottom:1em; margin-bottom:1em;">
+                            <div style="font-size:var(--font-xl); font-weight:bold; color:#333;">${txt.summary_title}</div>
+                            <div style="color:#888;">${headerBrand} - ${new Date().toLocaleDateString(currentLang === 'th' ? 'th-TH' : 'en-US')}</div>
+                        </div>
+                        <div class="summary-content">
+                            <table class="summary-table">
+                                <thead><tr><th>${txt.col_item}</th><th class="col-qty">${txt.col_qty}</th></tr></thead>
+                                <tbody>${summaryRows}<tr style="background:#fff0f5; font-weight:bold;"><td style="text-align:right; padding-right:1em;">${txt.grand_total}</td><td style="text-align:center; font-size:1.4em; color:var(--primary-dark);">${grandTotal}</td></tr></tbody>
+                            </table>
+                        </div>
+                        ${getFooterHtml('1')}
+                    </div>`;
+                    cardsBuffer.push(summaryCard);
+                }
+            }
+
+            // B. Order Cards
+            let seqCount = 0; 
+            for(let i=1; i<excelData.length; i++) {
+                let row = excelData[i];
+                if(!row || !row[1] || row[1].toString().trim() === "") continue;
+
+                let allItemsHtml = [];
+                let totalQty = 0;
+                let hasItems = false;
+
+                productColumns.forEach(prod => {
+                    let qty = parseFloat(row[prod.index]);
+                    if(qty > 0) {
+                        hasItems = true;
+                        totalQty += qty;
+                        let imgUrl = productImages[prod.index] || 'https://placehold.co/100x100/eee/ccc?text=NoImg';
+                        let hlStyle = qty > 1 ? 'color:#e11d48; font-weight:bold; font-size:1.2em;' : '';
+                        let rowStyle = (qty > 1 && doHighlight) ? `background:${hlColor};` : '';
+                        let rowHtml = `<div class="item-row" style="${rowStyle}"><img src="${imgUrl}"><div style="flex-grow:1; line-height:1.2;">${prod.name}</div><div style="${hlStyle}">x${qty}</div></div>`;
+                        allItemsHtml.push(rowHtml);
+                    }
+                });
+
+                if(hasItems) {
+                    let orderID = row[0] || '';
+                    let name = row[1];
+                    let address = row[2] || '-';
+                    let tel = row[3] || '';
+                    let note = row[4] || '';
+
+                    // Shipping Card
+                    if(doShipping) {
+                        seqCount++;
+                        let shipHtml = `
+                        <div class="shipping-box">
+                            <div class="border-b" style="font-size:0.9em; border-bottom:none;">
+                                <strong>${txt.from}</strong><br>
+                                <span style="white-space:pre-wrap;">${senderAddr}</span>
+                            </div>
+                            
+                            <div style="border-bottom:4px solid #000; margin: 10px 0 15px 0; width:100%;"></div>
+
+                            <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+                                <div style="font-size:var(--font-xl); font-weight:bold;">${txt.to}</div>
+                                <div style="font-size:var(--font-lg); font-weight:bold; margin:0.2em 0;">${name}</div>
+                                <div style="font-size:var(--font-base); white-space:pre-wrap;">${address}</div>
+                                ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:0.5em;">📞 ${tel}</div>` : ''}
+                            </div>
+                            
+                            <div style="border-top:2px solid #333; padding-top:0.5em; margin-top:auto; display:flex; justify-content:space-between; align-items:center;">
+                                <div style="font-weight:bold; font-size:0.9em;">${txt.page} #${seqCount}</div>
+                                <div style="font-size:0.9em;">${txt.ref} <strong>${orderID}</strong></div>
+                            </div>
+                        </div>`;
+                        cardsBuffer.push(shipHtml);
+                    }
+
+                    // Packing Card (with Pagination)
+                    // Packing Card (with Pagination)
+                    if(doPacking) {
+                        // --- แก้ไขจำนวนสินค้าต่อหน้า (Logic ใหม่) ---
+                        let limit = 8; // ค่าเริ่มต้น (A4)
+                        if (isEco8) limit = 3; 
+                        else if (paperSize === 'a6') limit = 6; // A6 เอา 6 แถวพอ
+                        else if (paperSize === 'a5') limit = 6; // A5 ก็เอา 6 แถวพอ (แก้ปัญหาล้น)
+                        
+                        let itemChunks = chunkArray(allItemsHtml, limit);
+                        let totalPages = itemChunks.length;
+
+                        itemChunks.forEach((chunkHtml, index) => {
+                            seqCount++; 
+                            let pageNum = index + 1;
+                            let itemsStr = chunkHtml.join('');
+                            
+                            let pageBadge = (totalPages > 1) ? `<span class="page-indicator">${txt.page} ${pageNum}/${totalPages}</span>` : '';
+                            
+                            // ลิงก์ชื่อร้านที่หัวกระดาษ
+                            let brandLink = `<a href="https://www.homu.in.th" target="_blank" style="text-decoration:none; color:inherit;">${headerBrand}</a>`;
+                            let headerTitle = (pageNum === 1) ? brandLink : `ORDER ${orderID}`;
+                            
+                            // ส่วนเนื้อหา (ให้ขยายเต็มที่)
+                            let contentHtml = `<div class="packing-content" style="flex-grow:1; padding:0.5em;">${itemsStr}</div>`;
+                            
+                            // ส่วนสรุปยอด / หรือ "มีต่อหน้าถัดไป"
+                            let summaryHtml = '';
+                            if (pageNum === totalPages) {
+                                // หน้าสุดท้าย: แสดงยอดรวม (ใส่ margin-top: auto เพื่อดันลงล่างสุดเสมอ)
+                                summaryHtml = `
+                                <div class="packing-totals" style="margin-top: auto; border-top: 1px solid #ddd;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <span style="font-weight:bold; color:#888;">${txt.total_qty}</span>
+                                        <span class="text-primary" style="font-size:1.3em; font-weight:bold;">${totalQty} ${txt.unit}</span>
+                                    </div>
+                                    ${note ? `<div style="background:#fffbeb; padding:0.4em; border:1px solid #fcd34d; border-radius:4px; font-size:0.85em; margin-top:5px;"><strong>Note:</strong> ${note}</div>` : ''}
+                                </div>`;
+                            } else {
+                                // หน้ายังไม่จบ: แสดงว่ามีต่อ (ใส่ margin-top: auto ดันลงล่างเช่นกัน)
+                                summaryHtml = `<div style="padding:5px; text-align:center; color:#ec4899; font-size:0.8em; font-weight:bold; border-top:1px solid #eee; margin-top: auto;">${txt.next_page}</div>`;
+                            }
+
+                            // ประกอบร่าง
+                            let packHtml = `
+                            <div class="packing-box">
+                                <div class="packing-header flex-between">
+                                    <div><div style="font-weight:bold; font-size:1.1em;">${headerTitle}</div><div style="font-size:0.8em; opacity:0.9;">${headerTagline}</div></div>
+                                    ${pageBadge}
+                                    <div class="text-center"><div style="font-size:0.7em; opacity:0.8;">ORDER NO.</div><div class="order-id-big">${orderID}</div></div>
+                                </div>
+                                <div class="border-b flex-between" style="padding:0.5em; font-size:0.9em;">
+                                    <div style="font-weight:bold; max-width:65%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
+                                    <div class="text-primary font-bold">${tel ? txt.tel + ' ' + tel : ''}</div>
+                                </div>
+                                ${contentHtml}
+                                ${summaryHtml}
+                                ${getFooterHtml(seqCount)}
+                            </div>`;
+                            cardsBuffer.push(packHtml);
+                        });
+                    }
+                }
+            }
+
+            // Render
+            let finalHtml = '';
+            if (isEcoMode) {
+                const CHUNK_SIZE = isEco8 ? 8 : 4;
+                const gridClass = isEco8 ? 'grid-8' : 'grid-4';
+                
+                for (let i = 0; i < cardsBuffer.length; i += CHUNK_SIZE) {
+                    const chunk = cardsBuffer.slice(i, i + CHUNK_SIZE);
+                    let gridItems = chunk.map(cardHtml => `<div class="a4-grid-item">${cardHtml}</div>`).join('');
+                    while(chunk.length < CHUNK_SIZE) {
+                        gridItems += `<div class="a4-grid-item" style="border:none;"></div>`; 
+                        chunk.push('empty');
+                    }
+                    finalHtml += `<div class="a4-grid-container ${gridClass}">${gridItems}</div>`;
+                }
+            } else {
+                finalHtml = cardsBuffer.map(card => `<div class="page-sheet">${card}</div>`).join('');
+            }
+
+            document.getElementById('previewOutput').innerHTML = finalHtml;
+            document.getElementById('printOutput').innerHTML = finalHtml;
+            
+            document.getElementById('topPrintBtn').classList.remove('hidden');
+            document.getElementById('bottomPrintBtn').classList.remove('hidden');
+            document.getElementById('topPrintWarning').classList.remove('hidden');
+            document.getElementById('bottomPrintWarning').classList.remove('hidden');
+            
+            updatePreviewScale();
+            document.getElementById('previewWrapper').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function updatePreviewScale() {
+            const wrapper = document.getElementById('previewWrapper');
+            const previewContent = document.getElementById('previewOutput');
+            const txt = I18N[currentLang];
+            if(!previewContent.innerHTML || previewContent.innerText.includes(txt.txt_not_gen)) return;
+
+            const paperSize = document.querySelector('input[name="paperSize"]:checked').value;
+            const isEco = (paperSize.startsWith('eco'));
+            let targetWidthPx = 378; 
+
+            if (isEco) {
+                targetWidthPx = 794; 
+            } else {
+                const config = PAPER_CONFIG[paperSize];
+                targetWidthPx = parseInt(config.width) * 3.78;
+            }
+
+            const screenWidth = Math.min(window.innerWidth - 40, 700); 
+
+            if(targetWidthPx > screenWidth) {
+                const scale = screenWidth / targetWidthPx;
+                wrapper.style.transform = `scale(${scale})`;
+                wrapper.style.marginBottom = `-${(1-scale)*50}%`; 
+            } else {
+                wrapper.style.transform = `scale(1)`;
+                wrapper.style.marginBottom = `0`;
+            }
+        }
+
+        window.addEventListener('resize', updatePreviewScale);
+    </script>
+</body>
+</html>
