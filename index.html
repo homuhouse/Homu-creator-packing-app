@@ -40,9 +40,20 @@
             width: 100%; position: relative;
         }
         
-        /* Language Switcher */
-        .lang-switch {
+        /* Top Actions (Manual & Language) */
+        .top-actions {
             position: absolute; top: 20px; right: 20px;
+            display: flex; gap: 8px; align-items: center;
+        }
+        .manual-btn {
+            background: #fff; border: 1px solid var(--primary); color: var(--primary-dark);
+            padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold;
+            text-decoration: none; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .manual-btn:hover { background: #fff0f5; border-color: var(--primary-dark); transform: translateY(-1px); }
+
+        .lang-switch {
             display: flex; gap: 5px; background: #f0f0f0;
             padding: 4px; border-radius: 20px;
         }
@@ -296,12 +307,16 @@
 <body>
 
     <div class="container no-print">
-        <div class="lang-switch">
-            <button class="lang-btn active" id="btn-th" onclick="setLang('th')">TH</button>
-            <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+        
+        <div class="top-actions">
+            <a href="https://www.homu.in.th/2026/02/26/creator-packing-and-shipping-system/" target="_blank" class="manual-btn" data-i18n="btn_manual">📖 คู่มือ</a>
+            <div class="lang-switch">
+                <button class="lang-btn active" id="btn-th" onclick="setLang('th')">TH</button>
+                <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+            </div>
         </div>
 
-        <div class="flex-between">
+        <div class="flex-between" style="margin-top: 20px;">
             <div>
                 <h1>Creator Packing & Shipping</h1>
                 <div class="subtitle">powered by <a href="https://www.homu.in.th" target="_blank">HOMU.IN.TH</a></div>
@@ -491,7 +506,7 @@
             'a5': { name: 'A5', dim: '(148x210 mm)', width: '140mm', height: '195mm', fontBase: '14px', fontLg: '20px', fontXl: '26px', imgSize: '60px', padding: '8mm' },
             'a4': { name: 'A4', dim: '(210x297 mm)', width: '190mm', height: '280mm', fontBase: '18px', fontLg: '24px', fontXl: '32px', imgSize: '80px', padding: '12mm' },
             'eco4': { name: 'A4', dim: '(210x297 mm)', width: '100mm', height: '147mm', fontBase: '12px', fontLg: '16px', fontXl: '20px', imgSize: '35px', padding: '4mm' },
-            'eco8': { name: 'A4', dim: '(210x297 mm)', width: '100mm', height: '74mm', fontBase: '10px', fontLg: '14px', fontXl: '16px', imgSize: '30px', padding: '3mm' }
+            'eco8': { name: 'A4', dim: '(210x297 mm)', width: '100mm', height: '74mm', fontBase: '11.5px', fontLg: '15px', fontXl: '18px', imgSize: '30px', padding: '4mm' }
         };
 
         // Translations Dictionary
@@ -521,6 +536,7 @@
                 btn_print_all: "🖨️ สั่งพิมพ์เอกสารทั้งหมด",
                 txt_preview: "ตัวอย่าง (Preview)",
                 txt_not_gen: "ยังไม่ได้สร้างเอกสาร",
+                btn_manual: "📖 คู่มือ",
                 warning_print: "<strong>สำคัญ: ตั้งค่าเครื่องพิมพ์ก่อนเสมอ!</strong><br>1. กด More Settings > Paper Size เลือก <strong><span id='warnSizeName'>A6</span></strong> <span id='warnSizeDim'>(105x148 mm)</span><br>2. หากไม่มีไซส์ให้เลือก <strong>'Custom'</strong> หรือ <strong>'User Defined'</strong>",
                 warning_bottom: "<strong>คำแนะนำการพิมพ์:</strong><br>เลือกขนาดกระดาษ <strong><span id='warnSizeName2'>A6</span></strong><br>เพื่อให้เอกสารพอดีกับกระดาษ ไม่ตกขอบ",
                 // Dynamic
@@ -564,6 +580,7 @@
                 btn_print_all: "🖨️ Print All Docs",
                 txt_preview: "Preview",
                 txt_not_gen: "No documents generated",
+                btn_manual: "📖 Manual",
                 warning_print: "<strong>Important: Printer Settings</strong><br>1. More Settings > Paper Size > Select <strong><span id='warnSizeName'>A6</span></strong> <span id='warnSizeDim'>(105x148 mm)</span><br>2. If unavailable, choose <strong>'Custom'</strong>",
                 warning_bottom: "<strong>Printing Tip:</strong><br>Select Paper Size <strong><span id='warnSizeName2'>A6</span></strong><br>to ensure it fits correctly.",
                 // Dynamic
@@ -809,8 +826,7 @@
                         }
                     });
 
-                    // กำหนดจำนวนรายการต่อหน้า (Pagination Logic สำหรับ Summary)
-                    let summaryLimit = 15; // ค่าเริ่มต้น A4
+                    let summaryLimit = 15;
                     if (paperSize === 'a6') summaryLimit = 6;
                     else if (paperSize === 'a5') summaryLimit = 12;
                     else if (paperSize === 'eco4') summaryLimit = 6;
@@ -828,7 +844,6 @@
                         let extraInfoHtml = '';
 
                         if (isLastPage) {
-                            // แสดงรวมทั้งหมดเฉพาะหน้าสุดท้าย
                             grandTotalHtml = `
                             <tr style="background:#fff0f5; font-weight:bold;">
                                 <td style="text-align:right; padding-right:1em;">${txt.grand_total}</td>
@@ -840,7 +855,6 @@
                                 ${txt.total_orders} <span style="color:var(--primary-dark); font-size:1.3em;">${totalOrdersCount}</span> ${txt.order_unit}
                             </div>`;
                         } else {
-                            // หน้าที่ยังไม่จบให้แสดงข้อความนี้ด้านล่าง
                             extraInfoHtml = `<div style="text-align:center; margin-top:10px; color:#ec4899; font-size:0.9em; font-weight:bold;">${txt.next_page}</div>`;
                         }
 
@@ -906,27 +920,55 @@
                     // Shipping Card
                     if(doShipping) {
                         seqCount++;
-                        let shipHtml = `
-                        <div class="shipping-box">
-                            <div class="border-b" style="font-size:0.9em; border-bottom:none;">
-                                <strong>${txt.from}</strong><br>
-                                <span style="white-space:pre-wrap;">${senderAddr}</span>
-                            </div>
-                            
-                            <div style="border-bottom:4px solid #000; margin: 10px 0 15px 0; width:100%;"></div>
+                        let shipHtml = '';
+                        
+                        if(isEco8) {
+                            // โครงสร้างสำหรับ Eco 8-in-1 ป้องกันล้นกรอบและอักษรใหญ่ขึ้น
+                            shipHtml = `
+                            <div class="shipping-box" style="padding: 0.8em; border-width: 2px;">
+                                <div class="border-b" style="font-size:0.85em; border-bottom:none; line-height: 1.15; margin-bottom: 2px;">
+                                    <strong>${txt.from}</strong><br>
+                                    <span style="white-space:pre-wrap; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${senderAddr}</span>
+                                </div>
+                                
+                                <div style="border-bottom:2px solid #000; margin: 4px 0 6px 0; width:100%;"></div>
 
-                            <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
-                                <div style="font-size:var(--font-xl); font-weight:bold;">${txt.to}</div>
-                                <div style="font-size:var(--font-lg); font-weight:bold; margin:0.2em 0;">${name}</div>
-                                <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word;">${address}</div>
-                                ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:0.5em;">📞 ${tel}</div>` : ''}
-                            </div>
-                            
-                            <div style="border-top:2px solid #333; padding-top:0.5em; margin-top:auto; display:flex; justify-content:space-between; align-items:center;">
-                                <div style="font-weight:bold; font-size:0.9em;">${txt.page} #${seqCount}</div>
-                                <div style="font-size:0.9em;">${txt.ref} <strong>${orderID}</strong></div>
-                            </div>
-                        </div>`;
+                                <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center; overflow: hidden;">
+                                    <div style="font-size:var(--font-xl); font-weight:bold; line-height: 1.1;">${txt.to}</div>
+                                    <div style="font-size:var(--font-lg); font-weight:bold; margin:2px 0; line-height: 1.2;">${name}</div>
+                                    <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word; line-height: 1.3; overflow: hidden; text-overflow: ellipsis;">${address}</div>
+                                    ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:4px;">📞 ${tel}</div>` : ''}
+                                </div>
+                                
+                                <div style="border-top:1px solid #333; padding-top:4px; margin-top:auto; display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="font-weight:bold; font-size:0.85em;">${txt.page} #${seqCount}</div>
+                                    <div style="font-size:0.85em;">${txt.ref} <strong>${orderID}</strong></div>
+                                </div>
+                            </div>`;
+                        } else {
+                            // โครงสร้างปกติ
+                            shipHtml = `
+                            <div class="shipping-box">
+                                <div class="border-b" style="font-size:0.9em; border-bottom:none;">
+                                    <strong>${txt.from}</strong><br>
+                                    <span style="white-space:pre-wrap;">${senderAddr}</span>
+                                </div>
+                                
+                                <div style="border-bottom:4px solid #000; margin: 10px 0 15px 0; width:100%;"></div>
+
+                                <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+                                    <div style="font-size:var(--font-xl); font-weight:bold;">${txt.to}</div>
+                                    <div style="font-size:var(--font-lg); font-weight:bold; margin:0.2em 0;">${name}</div>
+                                    <div style="font-size:var(--font-base); white-space:pre-wrap; word-break: break-word;">${address}</div>
+                                    ${tel ? `<div style="font-size:var(--font-lg); font-weight:bold; margin-top:0.5em;">📞 ${tel}</div>` : ''}
+                                </div>
+                                
+                                <div style="border-top:2px solid #333; padding-top:0.5em; margin-top:auto; display:flex; justify-content:space-between; align-items:center;">
+                                    <div style="font-weight:bold; font-size:0.9em;">${txt.page} #${seqCount}</div>
+                                    <div style="font-size:0.9em;">${txt.ref} <strong>${orderID}</strong></div>
+                                </div>
+                            </div>`;
+                        }
                         cardsBuffer.push(shipHtml);
                     }
 
