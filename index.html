@@ -261,13 +261,13 @@
         /* Footer */
         .packing-footer-row {
             background: #fafafa;
-            padding: 10px 12px; /* เพิ่ม Padding ให้ไม่ชิดขอบ */
+            padding: 10px 12px;
             border-top: 1px solid #ddd;
             display: flex; 
             justify-content: space-between; 
             align-items: center;
             flex-shrink: 0;
-            height: 40px; /* Fix ความสูง Footer */
+            height: 40px; 
         }
 
         .powered-link {
@@ -277,9 +277,9 @@
         .seq-text { color: #888; font-size: 0.8em; font-weight: bold; }
 
         .packing-totals {
-    background: #fafafa; padding: 0.5em; border-top: 1px solid #ddd; flex-shrink: 0;
-    margin-top: auto;  /* <--- เติมบรรทัดนี้ครับ */
-}
+            background: #fafafa; padding: 0.5em; border-top: 1px solid #ddd; flex-shrink: 0;
+            margin-top: auto; 
+        }
 
         /* Summary Page */
         .summary-page { width: 100%; height: 100%; background: white; padding: var(--padding-card); font-size: var(--font-base); display: flex; flex-direction: column;}
@@ -364,7 +364,7 @@
                 <input type="radio" name="paperSize" value="eco4" onchange="updateUI()">
                 <div class="icon">🌱</div>
                 <div class="label">Eco 4-in-1</div>
-                <div class="sub" data-i18n="eco4_sub">A4 (ตัด 4 ใบเล็ก)</div>
+                <div class="sub" data-i18n="eco4_sub">A4 (4 ใบ)</div>
                 <div class="check-badge">✓</div>
             </label>
 
@@ -400,7 +400,7 @@
         </div>
         
         <div id="senderZone" style="margin-top:15px; display:none;">
-            <textarea id="senderAddress" rows="3" placeholder="📍 ที่อยู่ผู้ส่ง (สำหรับใบปะหน้า)..." data-i18n-ph="ph_sender"></textarea>
+            <textarea id="senderAddress" rows="3" placeholder="📍 ที่อยู่ผู้ส่ง (สำหรับใบจ่าหน้า)..." data-i18n-ph="ph_sender"></textarea>
         </div>
 
         <h2 data-i18n="step4">4. นำเข้าข้อมูล</h2>
@@ -535,7 +535,9 @@
                 col_item: "ชื่อสินค้า",
                 col_qty: "จำนวน",
                 grand_total: "รวมทั้งหมด",
-                next_page: "... มีต่อหน้าถัดไป ..."
+                next_page: "... มีต่อหน้าถัดไป ...",
+                total_orders: "รวมออเดอร์ทั้งหมด:",
+                order_unit: "ออเดอร์"
             },
             en: {
                 step1: "1. Shop Settings & Theme",
@@ -576,7 +578,9 @@
                 col_item: "Item Name",
                 col_qty: "Qty",
                 grand_total: "Grand Total",
-                next_page: "... Continued next page ..."
+                next_page: "... Continued next page ...",
+                total_orders: "Total Orders:",
+                order_unit: "orders"
             }
         };
 
@@ -765,13 +769,23 @@
 
             // A. Summary Card
             if(doSummary) {
+                let totalOrdersCount = 0; // ตัวแปรเก็บจำนวนออเดอร์ทั้งหมด
                 for(let i=1; i<excelData.length; i++) {
                     let row = excelData[i];
                     if(!row || !row[1] || row[1].toString().trim() === "") continue;
+                    
+                    let hasItemInRow = false;
                     productColumns.forEach(prod => {
                         let qty = parseFloat(row[prod.index]);
-                        if(qty > 0) globalSummary[prod.name] += qty;
+                        if(qty > 0) {
+                            globalSummary[prod.name] += qty;
+                            hasItemInRow = true;
+                        }
                     });
+                    
+                    if(hasItemInRow) {
+                        totalOrdersCount++; // นับจำนวนออเดอร์ที่มีการสั่งสินค้า
+                    }
                 }
 
                 let grandTotal = 0;
@@ -784,8 +798,19 @@
                         if(qty > 0) {
                             let colWithImage = productColumns.find(col => col.name === name && productImages[col.index]);
                             let imgUrl = colWithImage ? productImages[colWithImage.index] : '';
-                            let imgTag = imgUrl ? `<img src="${imgUrl}" class="summary-img">` : '';
-                            summaryRows += `<tr><td>${imgTag} ${name}</td><td class="cell-qty">${qty}</td></tr>`;
+                            // ปรับ flex-shrink: 0; เพื่อไม่ให้รูปโดนบีบเวลากรอบข้อความยาว
+                            let imgTag = imgUrl ? `<img src="${imgUrl}" class="summary-img" style="flex-shrink: 0;">` : '';
+                            
+                            // จัดโค้ดตรงนี้ให้ชิดซ้าย
+                            summaryRows += `<tr>
+                                <td style="text-align: left;">
+                                    <div style="display: flex; align-items: center; justify-content: flex-start;">
+                                        ${imgTag}
+                                        <span style="line-height: 1.3;">${name}</span>
+                                    </div>
+                                </td>
+                                <td class="cell-qty">${qty}</td>
+                            </tr>`;
                         }
                     });
 
@@ -798,8 +823,18 @@
                         <div class="summary-content">
                             <table class="summary-table">
                                 <thead><tr><th>${txt.col_item}</th><th class="col-qty">${txt.col_qty}</th></tr></thead>
-                                <tbody>${summaryRows}<tr style="background:#fff0f5; font-weight:bold;"><td style="text-align:right; padding-right:1em;">${txt.grand_total}</td><td style="text-align:center; font-size:1.4em; color:var(--primary-dark);">${grandTotal}</td></tr></tbody>
+                                <tbody>
+                                    ${summaryRows}
+                                    <tr style="background:#fff0f5; font-weight:bold;">
+                                        <td style="text-align:right; padding-right:1em;">${txt.grand_total}</td>
+                                        <td style="text-align:center; font-size:1.4em; color:var(--primary-dark);">${grandTotal}</td>
+                                    </tr>
+                                </tbody>
                             </table>
+                            
+                            <div style="text-align:right; margin-top:20px; font-weight:bold; font-size:1.1em; color:#555;">
+                                ${txt.total_orders} <span style="color:var(--primary-dark); font-size:1.3em;">${totalOrdersCount}</span> ${txt.order_unit}
+                            </div>
                         </div>
                         ${getFooterHtml('1')}
                     </div>`;
@@ -866,11 +901,10 @@
 
                     // Packing Card (with Pagination)
                     if(doPacking) {
-                        // --- แก้ไขจำนวนสินค้าต่อหน้า (Logic ใหม่) ---
                         let limit = 8; // ค่าเริ่มต้น (A4)
                         if (isEco8) limit = 3; 
-                        else if (paperSize === 'a6') limit = 6; // A6 เอา 6 แถวพอ
-                        else if (paperSize === 'a5') limit = 6; // A5 ก็เอา 6 แถวพอ (แก้ปัญหาล้น)
+                        else if (paperSize === 'a6') limit = 6; 
+                        else if (paperSize === 'a5') limit = 6; 
                         
                         let itemChunks = chunkArray(allItemsHtml, limit);
                         let totalPages = itemChunks.length;
@@ -892,7 +926,6 @@
                             // ส่วนสรุปยอด / หรือ "มีต่อหน้าถัดไป"
                             let summaryHtml = '';
                             if (pageNum === totalPages) {
-                                // หน้าสุดท้าย: แสดงยอดรวม (ใส่ margin-top: auto เพื่อดันลงล่างสุดเสมอ)
                                 summaryHtml = `
                                 <div class="packing-totals" style="margin-top: auto; border-top: 1px solid #ddd;">
                                     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -902,7 +935,6 @@
                                     ${note ? `<div style="background:#fffbeb; padding:0.4em; border:1px solid #fcd34d; border-radius:4px; font-size:0.85em; margin-top:5px;"><strong>Note:</strong> ${note}</div>` : ''}
                                 </div>`;
                             } else {
-                                // หน้ายังไม่จบ: แสดงว่ามีต่อ (ใส่ margin-top: auto ดันลงล่างเช่นกัน)
                                 summaryHtml = `<div style="padding:5px; text-align:center; color:#ec4899; font-size:0.8em; font-weight:bold; border-top:1px solid #eee; margin-top: auto;">${txt.next_page}</div>`;
                             }
 
@@ -992,4 +1024,3 @@
     </script>
 </body>
 </html>
-
