@@ -826,11 +826,11 @@
                         }
                     });
 
-                    let summaryLimit = 15;
-                    if (paperSize === 'a6') summaryLimit = 6;
-                    else if (paperSize === 'a5') summaryLimit = 12;
-                    else if (paperSize === 'eco4') summaryLimit = 6;
-                    else if (isEco8) summaryLimit = 3;
+let summaryLimit = 12; // เปลี่ยนค่าเริ่มต้นของ A4 จาก 15 เหลือ 12
+if (paperSize === 'a6') summaryLimit = 6;
+else if (paperSize === 'a5') summaryLimit = 9; // เปลี่ยนของ A5 จาก 12 เหลือ 9
+else if (paperSize === 'eco4') summaryLimit = 6;
+else if (isEco8) summaryLimit = 3;
 
                     let summaryChunks = chunkArray(summaryRowArray, summaryLimit);
                     let totalSummaryPages = summaryChunks.length;
