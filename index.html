@@ -435,8 +435,16 @@
             <div id="fileName" style="color:green; font-weight:bold; font-size:12px; margin-top:5px;"></div>
         </div>
 
-        <div id="imgSection" class="hidden" style="margin-top:20px;">
+ <div id="imgSection" class="hidden" style="margin-top:20px;">
             <h2 data-i18n="step5">5. รูปสินค้า</h2>
+
+            <div class="print-warning" style="margin-bottom: 15px; margin-top: 0;">
+                <div class="warning-icon" style="font-size: 16px;">⚠️</div>
+                <div style="font-size: 13px;">
+                    <strong data-i18n="warning_img_title">ข้อควรระวังเรื่องรูปภาพ:</strong>
+                    <span data-i18n="warning_img_desc">ไม่ควรอัปโหลดรูปภาพที่มีขนาดไฟล์ใหญ่เกินไป เพราะอาจทำให้ระบบค้างและไม่สามารถสร้างเอกสารได้ (แนะนำขนาดไม่เกิน 500x500 px หรือไฟล์เล็กกว่า 500KB ต่อรูป)</span>
+                </div>
+            </div>
             <div id="imgContainer"></div>
         </div>
 
@@ -554,9 +562,25 @@
                 next_page: "... มีต่อหน้าถัดไป ...",
                 total_orders: "รวมออเดอร์ทั้งหมด:",
                 order_unit: "ออเดอร์"
+                warning_bottom: "<strong>คำแนะนำการพิมพ์:</strong><br>เลือกขนาดกระดาษ <strong><span id='warnSizeName2'>A6</span></strong><br>เพื่อให้เอกสารพอดีกับกระดาษ ไม่ตกขอบ",
+                
+                // --- เพิ่ม 2 บรรทัดนี้ ---
+                warning_img_title: "ข้อควรระวังเรื่องรูปภาพ:",
+                warning_img_desc: "ไม่ควรอัปโหลดรูปภาพที่มีขนาดไฟล์ใหญ่เกินไป เพราะอาจทำให้ระบบค้างและไม่สามารถสร้างเอกสารได้ (แนะนำขนาดไม่เกิน 500x500 px หรือไฟล์เล็กกว่า 500KB ต่อรูป)",
+                
+                // Dynamic
+                from: "FROM (ผู้ส่ง):",
             },
             en: {
                 step1: "1. Shop Settings & Theme",
+            warning_bottom: "<strong>Printing Tip:</strong><br>Select Paper Size <strong><span id='warnSizeName2'>A6</span></strong><br>to ensure it fits correctly.",
+                
+                // --- เพิ่ม 2 บรรทัดนี้ ---
+                warning_img_title: "Image Size Warning:",
+                warning_img_desc: "Please avoid uploading large image files as it may cause the browser to freeze and fail to generate documents (Recommended: < 500x500 px or < 500KB per image).",
+                
+                // Dynamic
+                from: "FROM:",
                 ph_brand: "Shop Name (e.g. HOMU)",
                 ph_tagline: "Tagline (e.g. Thank you)",
                 label_bg: "Header BG:",
