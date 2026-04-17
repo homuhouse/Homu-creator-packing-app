@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ระบบออกใบเสร็จ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #2d2d2d; --accent: #e8547a; --accent-light: #fce4ec;
+    --accent2: #4ec9c0; --muted: #9e9e9e; --border: #f0d6dd;
+    --bg: #fff5f7; --white: #ffffff; --danger: #e53935; --success: #43a047;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--ink); }
+
+  .app { display: flex; min-height: 100vh; }
+
+  /* SIDEBAR desktop */
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: linear-gradient(180deg, #e8547a 0%, #d63f68 60%, #c23060 100%);
+    color: #fff;
+    display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  }
+  .sidebar-logo { padding: 26px 26px 22px; border-bottom: 1px solid rgba(255,255,255,.2); }
+  .sidebar-logo h1 { font-family: 'Playfair Display', serif; font-size: 19px; color: #fff; letter-spacing: 1px; }
+  .sidebar-logo p { font-size: 11px; color: rgba(255,255,255,.65); margin-top: 3px; }
+  .sidebar nav { padding: 14px 0; flex: 1; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 26px;
+    background: none; border: none; color: rgba(255,255,255,.8);
+    font-family: 'Sarabun', sans-serif; font-size: 15px; cursor: pointer; text-align: left; transition: .15s;
+  }
+  .nav-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+  .nav-btn.active { background: rgba(255,255,255,.22); color: #fff; border-right: 3px solid #fff; font-weight: 700; }
+  .nav-icon { font-size: 17px; width: 20px; text-align: center; }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; overflow-x: hidden; min-width: 0; }
+
+  /* TOPBAR */
+  .topbar {
+    padding: 13px 22px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 20; gap: 10px;
+  }
+  .topbar h2 { font-size: 17px; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .topbar-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  .content { padding: 22px; flex: 1; }
+
+  /* BOTTOM NAV mobile */
+  .bottom-nav { display: none; }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 18px; border-radius: 8px;
+    font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none; transition: .15s; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:active { background: #a07018; }
+  .btn-outline { background: none; border: 1.5px solid var(--border); color: var(--ink); }
+  .btn-outline:active { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: #fde8e8; color: var(--danger); border: 1.5px solid #f5c6cb; }
+  .btn-sm { padding: 7px 12px; font-size: 13px; }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 18px; }
+  .stat-card { background: var(--white); border-radius: 12px; padding: 16px; border: 1px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .stat-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+  .stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stat-card.gold .stat-value { color: var(--accent); }
+  .stat-card.green .stat-value { color: var(--success); }
+  .stat-card.red .stat-value { color: var(--danger); }
+
+  /* CARD */
+  .card { background: var(--white); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .card-header { padding: 13px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .card-title { font-weight: 600; font-size: 15px; }
+  .card-body { padding: 18px; }
+  .mb-16 { margin-bottom: 16px; }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; min-width: 460px; }
+  th { text-align: left; padding: 9px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: var(--bg); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid #f0ede6; }
+  tr:last-child td { border-bottom: none; }
+
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .badge-paid { background:#d4edda;color:#155724; }
+  .badge-pending { background:#fff3cd;color:#856404; }
+  .badge-overdue { background:#f8d7da;color:#721c24; }
+  .badge-draft { background:#e2e3e5;color:#383d41; }
+
+  .search-bar { padding: 9px 13px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'Sarabun', sans-serif; font-size: 14px; outline: none; background: var(--bg); -webkit-appearance: none; }
+  .search-bar:focus { border-color: var(--accent); }
+
+  /* FORM */
+  .section-header { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); padding-bottom: 10px; border-bottom: 2px solid var(--accent-light); margin-bottom: 14px; }
+  .topbar { background: #fff; border-bottom: 2px solid var(--accent-light); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  input, select, textarea {
+    padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: 'Sarabun', sans-serif; font-size: 15px; color: var(--ink);
+    background: var(--white); outline: none; transition: .15s;
+    -webkit-appearance: none; appearance: none; width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,147,42,.1); }
+  textarea { resize: vertical; min-height: 70px; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b7a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 34px; }
+
+  /* ITEMS */
+  .items-wrap { border-radius: 10px; border: 1.5px solid var(--border); overflow: hidden; margin-top: 6px; }
+  .items-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .items-table { min-width: 460px; width: 100%; border-collapse: collapse; }
+  .items-table th { font-size: 11px; padding: 9px 12px; }
+  .items-table td { padding: 2px 4px; border-bottom: 1px solid #f0ede6; }
+  .items-table tr:last-child td { border-bottom: none; }
+  .items-table input { border: none; background: transparent; padding: 9px 8px; width: 100%; border-radius: 0; box-shadow: none; font-size: 14px; }
+  .items-table input:focus { background: #fffef4; border-bottom: 1.5px solid var(--accent); box-shadow: none; }
+  .del-row { background: none; border: none; color: #ccc; font-size: 20px; cursor: pointer; padding: 4px 8px; line-height: 1; }
+  .del-row:active { color: var(--danger); }
+  .items-footer { padding: 11px 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+
+  /* TOTALS */
+  .totals-box { background: var(--white); border-radius: 10px; border: 1.5px solid var(--border); padding: 16px 18px; margin-top: 14px; }
+  .total-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 14px; }
+  .total-row.grand { font-size: 17px; font-weight: 700; padding-top: 10px; border-top: 2px solid var(--border); color: var(--accent); margin-top: 5px; }
+  .total-row .lbl { color: var(--muted); }
+  .inline-inp { display: flex; align-items: center; gap: 5px; }
+  .inline-inp input { width: 58px; padding: 6px 8px; font-size: 13px; text-align: right; }
+
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; flex-wrap: wrap; }
+
+  /* INVOICE DOC */
+  .invoice-doc { background: var(--white); border-radius: 12px; border: 1px solid var(--border); padding: 36px 40px; }
+  .inv-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; gap: 16px; flex-wrap: wrap; }
+  .inv-company h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--accent); }
+  .inv-company p { font-size: 13px; color: var(--muted); line-height: 1.8; margin-top: 4px; }
+  .inv-meta { text-align: right; }
+  .inv-title { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--ink); letter-spacing: 1px; }
+  .inv-number { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .inv-meta table { margin-left: auto; margin-top: 8px; }
+  .inv-meta td { padding: 2px 6px; font-size: 12px; }
+  .inv-meta td:first-child { color: var(--muted); text-align: right; }
+  .inv-meta td:last-child { font-weight: 600; }
+  .inv-divider { height: 3px; background: linear-gradient(90deg,var(--accent),var(--accent-light)); border-radius: 2px; margin: 18px 0; }
+  .inv-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 24px; }
+  .inv-party h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .inv-party p { font-size: 13px; line-height: 1.8; }
+  .inv-party strong { font-size: 15px; display: block; margin-bottom: 3px; }
+  .inv-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .inv-table { width: 100%; border-collapse: collapse; min-width: 360px; margin-bottom: 18px; }
+  .inv-table th { background: #e8547a; color: #fff; padding: 10px 12px; font-size: 12px; text-align: left; font-weight: 600; }
+  .inv-table th:last-child, .inv-table td:last-child { text-align: right; }
+  .inv-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid #eeebe4; }
+  .inv-table tr:last-child td { border-bottom: none; }
+  .inv-table tr:nth-child(even) td { background: #faf8f4; }
+  .inv-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; margin-bottom: 26px; }
+  .inv-totals .row { display: flex; gap: 50px; font-size: 13px; }
+  .inv-totals .row span:first-child { color: var(--muted); }
+  .inv-totals .row span:last-child { min-width: 90px; text-align: right; font-weight: 500; }
+  .inv-totals .row.grand { font-size: 16px; font-weight: 700; color: var(--accent); border-top: 2px solid var(--accent-light); padding-top: 8px; margin-top: 4px; }
+  .inv-footer { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--border); padding-top: 22px; gap: 20px; flex-wrap: wrap; }
+  .inv-note { font-size: 12px; color: var(--muted); line-height: 1.7; flex: 1; min-width: 0; }
+  .inv-sig { text-align: center; flex-shrink: 0; }
+  .sig-line { width: 130px; border-bottom: 1px solid var(--ink); margin-bottom: 6px; height: 40px; }
+  .inv-sig p { font-size: 11px; color: var(--muted); }
+
+  .preview-header { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+
+  /* MODAL */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; padding: 16px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--white); border-radius: 16px; padding: 26px; max-width: 380px; width: 100%; box-shadow: 0 24px 80px rgba(0,0,0,.2); animation: popIn .2s ease; }
+  @keyframes popIn { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .modal p { color: var(--muted); font-size: 14px; margin-bottom: 18px; line-height: 1.7; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 82px; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; background: #2d2d2d; color: #fff; padding: 11px 20px; border-radius: 10px; font-size: 14px; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,.25); transition: .28s cubic-bezier(.34,1.56,.64,1); z-index: 9999; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.gold { border-left: 4px solid var(--accent); }
+
+  .action-btns { display: flex; gap: 5px; }
+
+  /* ==================== RESPONSIVE ==================== */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+
+    .bottom-nav {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(90deg,#e8547a,#d63f68); z-index: 50; border-top: 1px solid rgba(255,255,255,.2);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .bnav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 9px 4px; background: none; border: none; color: rgba(255,255,255,.65);
+      font-family: 'Sarabun', sans-serif; font-size: 10px; gap: 3px; cursor: pointer; transition: .15s;
+    }
+    .bnav-btn .nav-icon { font-size: 20px; width: auto; }
+    .bnav-btn.active { color: #fff; font-weight: 700; }
+
+    .topbar { padding: 11px 14px; }
+    .topbar h2 { font-size: 15px; }
+    .topbar-actions .lbl { display: none; }
+
+    .content { padding: 14px 14px 86px; }
+
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+
+    .form-actions { flex-direction: column; }
+    .form-actions .btn { width: 100%; justify-content: center; }
+
+    .invoice-doc { padding: 18px 16px; }
+    .inv-header { flex-direction: column; gap: 10px; }
+    .inv-meta { text-align: left; }
+    .inv-meta table { margin-left: 0; }
+    .inv-parties { grid-template-columns: 1fr; gap: 14px; }
+    .inv-title { font-size: 22px; }
+    .inv-totals .row { gap: 24px; }
+
+    .toast { bottom: 86px; }
+    .search-bar { width: 100%; }
+  }
+
+  /* iPad */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .sidebar { width: 190px; min-width: 190px; }
+    .nav-btn { padding: 11px 18px; font-size: 14px; }
+    .content { padding: 18px; }
+    .topbar { padding: 12px 18px; }
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .invoice-doc { padding: 28px 30px; }
+    .inv-parties { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Desktop: show 4-col stats + preview pane */
+  @media (min-width: 1025px) {
+    .stats { grid-template-columns: repeat(4,1fr); }
+    .create-layout { display: grid; grid-template-columns: 1fr 360px; gap: 22px; }
+    .preview-col { display: block; }
+    .preview-sticky { position: sticky; top: 76px; }
+    .preview-scale { transform: scale(.58); transform-origin: top left; width: calc(100%/0.58); margin-bottom: -42%; }
+    .toast { bottom: 30px; }
+  }
+  @media (max-width: 1024px) {
+    .create-layout { display: block; }
+    .preview-col { display: none; }
+  }
+
+  @media print {
+    .sidebar, .topbar, .bottom-nav, .no-print, .preview-header { display: none !important; }
+    body { background: #fff; }
+    .content { padding: 0; }
+    .invoice-doc { border: none; border-radius: 0; padding: 14mm 16mm; box-shadow: none; }
+    .page { display: none !important; }
+    #page-preview { display: block !important; }
+    .main { overflow: visible; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR (desktop/iPad) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1 id="sidebarBrand">InvoicePro</h1>
+      <p>ระบบออกใบเสร็จ</p>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span> แดชบอร์ด</button>
+      <button class="nav-btn" onclick="showPage('create');newInvoice()"><span class="nav-icon">✏️</span> สร้างใบเสร็จ</button>
+      <button class="nav-btn" onclick="showPage('list')"><span class="nav-icon">📋</span> รายการทั้งหมด</button>
+      <button class="nav-btn" onclick="showPage('settings')"><span class="nav-icon">⚙️</span> ตั้งค่าบริษัท</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar no-print">
+      <h2 id="pageTitle">แดชบอร์ด</h2>
+      <div class="topbar-actions">
+        <button class="btn btn-outline btn-sm" onclick="showPage('list')">📋 <span class="lbl">รายการ</span></button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('create');newInvoice()">＋ <span class="lbl">สร้างใหม่</span></button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats">
+          <div class="stat-card gold"><div class="stat-label">ยอดรวม</div><div class="stat-value" id="s-total">฿0</div><div class="stat-sub" id="s-cnt">0 ใบ</div></div>
+          <div class="stat-card green"><div class="stat-label">ชำระแล้ว</div><div class="stat-value" id="s-paid">฿0</div><div class="stat-sub" id="s-paid-c">0 รายการ</div></div>
+          <div class="stat-card"><div class="stat-label">รอชำระ</div><div class="stat-value" id="s-pend">฿0</div><div class="stat-sub" id="s-pend-c">0 รายการ</div></div>
+          <div class="stat-card red"><div class="stat-label">เกินกำหนด</div><div class="stat-value" id="s-over">฿0</div><div class="stat-sub" id="s-over-c">0 รายการ</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">ใบเสร็จล่าสุด</span>
+            <button class="btn btn-outline btn-sm" onclick="showPage('list')">ดูทั้งหมด →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th><th>สถานะ</th><th></th></tr></thead>
+              <tbody id="dashBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE -->
+      <div id="page-create" class="page">
+        <div class="create-layout">
+          <div>
+            <div class="card mb-16">
+              <div class="card-body">
+                <div class="section-header">ข้อมูลใบเสร็จ</div>
+                <div class="form-grid">
+                  <div class="form-group"><label>เลขที่ใบเสร็จ</label><input id="f-num" type="text" inputmode="text"></div>
+                  <div class="form-group"><label>สถานะ</label>
+                    <select id="f-status"><option value="draft">ฉบับร่าง</option><option value="pending">รอชำระ</option><option value="paid">ชำระแล้ว</option><option value="overdue">เกินกำหนด</option></select>
+                  </div>
+                  <div class="form-group"><label>วันที่ออก</label><input id="f-date" type="date"></div>
+                  <div class="form-group"><label>วันครบกำหนด</label><input id="f-due" type="date"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-body">
+                <div class="section-header">ข้อมูลลูกค้า</div>
+                <div class="form-grid">
+                  <div class="form-group"><label>ชื่อลูกค้า / บริษัท</label><input id="f-cname" type="text" placeholder="บริษัท เอบีซี จำกัด"></div>
+                  <div class="form-group"><label>เลขผู้เสียภาษี</label><input id="f-ctax" type="text" inputmode="numeric" placeholder="0-0000-00000-00-0"></div>
+                  <div class="form-group full"><label>ที่อยู่</label><textarea id="f-caddr" placeholder="เลขที่ ถนน แขวง เขต จังหวัด รหัสไปรษณีย์"></textarea></div>
+                  <div class="form-group"><label>โทรศัพท์</label><input id="f-cphone" type="tel" placeholder="02-xxx-xxxx"></div>
+                  <div class="form-group"><label>อีเมล</label><input id="f-cemail" type="email" placeholder="contact@example.com"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-16">
+              <div class="section-header">รายการสินค้า / บริการ</div>
+              <div class="items-wrap">
+                <div class="items-scroll">
+                  <table class="items-table">
+                    <thead><tr>
+                      <th style="width:40%">รายการ</th>
+                      <th style="width:14%;text-align:center">จำนวน</th>
+                      <th style="width:22%;text-align:right">ราคา/หน่วย</th>
+                      <th style="width:19%;text-align:right">รวม</th>
+                      <th style="width:5%"></th>
+                    </tr></thead>
+                    <tbody id="itemsBody"></tbody>
+                  </table>
+                </div>
+                <div class="items-footer">
+                  <button class="btn btn-outline btn-sm" onclick="addItem()" type="button">＋ เพิ่มรายการ</button>
+                  <span style="font-size:12px;color:var(--muted)"><span id="itemCount">0</span> รายการ</span>
+                </div>
+              </div>
+              <div class="totals-box">
+                <div class="total-row"><span class="lbl">ยอดรวมก่อนภาษี</span><span id="t-sub">฿0.00</span></div>
+                <div class="total-row"><span class="lbl">ส่วนลด</span><span class="inline-inp"><input id="f-disc" type="number" inputmode="decimal" min="0" max="100" value="0" oninput="recalc()">%</span></div>
+                <div class="total-row"><span class="lbl">VAT</span><span class="inline-inp"><input id="f-vat" type="number" inputmode="decimal" min="0" value="7" oninput="recalc()">%</span></div>
+                <div class="total-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px"><span class="lbl">ภาษีมูลค่าเพิ่ม</span><span id="t-vat" style="color:var(--muted)">฿0.00</span></div>
+                <div class="total-row grand"><span>ยอดสุทธิ</span><span id="t-grand">฿0.00</span></div>
+              </div>
+            </div>
+
+            <div class="card mb-16">
+              <div class="card-body">
+                <div class="form-group"><label>หมายเหตุ / เงื่อนไขชำระเงิน</label><textarea id="f-note" placeholder="กรุณาชำระภายใน 30 วัน ..."></textarea></div>
+              </div>
+            </div>
+
+            <div class="form-actions no-print">
+              <button class="btn btn-outline" onclick="saveInv('draft')" type="button">💾 บันทึกฉบับร่าง</button>
+              <button class="btn btn-primary" onclick="saveInv('pending')" type="button">✅ ออกใบเสร็จ</button>
+            </div>
+          </div>
+
+          <!-- PREVIEW COL desktop only -->
+          <div class="preview-col">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">ตัวอย่าง</div>
+            <div class="preview-sticky"><div class="preview-scale" id="livePreview"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIST -->
+      <div id="page-list" class="page">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">ใบเสร็จทั้งหมด</span>
+            <input class="search-bar" id="searchQ" type="search" placeholder="🔍 ค้นหา..." oninput="renderList()">
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>เลขที่</th><th>ลูกค้า</th><th>วันที่</th><th>ยอด</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+              <tbody id="listBody"></tbody>
+            </table>
+          </div>
+          <div id="emptyMsg" style="display:none;padding:40px;text-align:center;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📄</div><p>ยังไม่มีใบเสร็จ</p></div>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div id="page-preview" class="page">
+        <div class="preview-header no-print">
+          <button class="btn btn-outline" onclick="showPage('list')" type="button">← กลับ</button>
+          <button class="btn btn-outline" onclick="editCurrent()" type="button">✏️ แก้ไข</button>
+          <button class="btn btn-primary" onclick="window.print()" type="button">🖨️ พิมพ์ / PDF</button>
+        </div>
+        <div id="fullPreview"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div id="page-settings" class="page">
+        <div class="card" style="max-width:620px">
+          <div class="card-body">
+            <div class="section-header">ข้อมูลบริษัท</div>
+            <div class="form-grid">
+              <div class="form-group full"><label>ชื่อบริษัท</label><input id="s-name" type="text" placeholder="บริษัท ของคุณ จำกัด"></div>
+              <div class="form-group full"><label>เลขผู้เสียภาษี</label><input id="s-tax" type="text" inputmode="numeric"></div>
+              <div class="form-group full"><label>ที่อยู่</label><textarea id="s-addr" rows="3"></textarea></div>
+              <div class="form-group"><label>โทรศัพท์</label><input id="s-phone" type="tel"></div>
+              <div class="form-group"><label>อีเมล</label><input id="s-email" type="email"></div>
+              <div class="form-group"><label>เว็บไซต์</label><input id="s-web" type="url"></div>
+              <div class="form-group"><label>Prefix เลขใบเสร็จ</label><input id="s-prefix" type="text" placeholder="INV-"></div>
+            </div>
+            <div style="margin-top:18px;text-align:right">
+              <button class="btn btn-primary" onclick="saveSettings()" type="button">💾 บันทึก</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- BOTTOM NAV mobile -->
+<div class="bottom-nav no-print">
+  <button class="bnav-btn active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><span>หน้าหลัก</span></button>
+  <button class="bnav-btn" onclick="showPage('create');newInvoice()"><span class="nav-icon">✏️</span><span>สร้างใหม่</span></button>
+  <button class="bnav-btn" onclick="showPage('list')"><span class="nav-icon">📋</span><span>รายการ</span></button>
+  <button class="bnav-btn" onclick="showPage('settings')"><span class="nav-icon">⚙️</span><span>ตั้งค่า</span></button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="mTitle">ยืนยัน</h3>
+    <p id="mMsg">ต้องการลบใบเสร็จนี้?</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()" type="button">ยกเลิก</button>
+      <button class="btn btn-danger" id="mOk" type="button">ลบ</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let DB = JSON.parse(localStorage.getItem('invDB') || '[]');
+let CFG = JSON.parse(localStorage.getItem('invCFG') || '{}');
+let editId = null, previewId = null, iid = 0;
+
+const PAGES = { dashboard:0, create:1, list:2, settings:3 };
+const TITLES = { dashboard:'แดชบอร์ด', create:'สร้างใบเสร็จ', list:'รายการทั้งหมด', preview:'ดูใบเสร็จ', settings:'ตั้งค่าบริษัท' };
+
+window.onload = () => { loadCFG(); resetForm(); renderDash(); renderList(); };
+
+function showPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  document.getElementById('pageTitle').textContent = TITLES[n]||'';
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i===PAGES[n]));
+  document.querySelectorAll('.bnav-btn').forEach((b,i) => b.classList.toggle('active', i===PAGES[n]));
+  window.scrollTo(0,0);
+  if (n==='dashboard') renderDash();
+  if (n==='list') renderList();
+}
+
+/* FORM */
+function resetForm() {
+  editId = null;
+  document.getElementById('itemsBody').innerHTML = ''; iid = 0;
+  ['f-cname','f-ctax','f-caddr','f-cphone','f-cemail','f-note'].forEach(id => { const e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('f-disc').value = 0;
+  document.getElementById('f-vat').value = 7;
+  document.getElementById('f-status').value = 'draft';
+  const now = new Date(), due = new Date(); due.setDate(due.getDate()+30);
+  document.getElementById('f-date').value = d2s(now);
+  document.getElementById('f-due').value = d2s(due);
+  nextNum();
+  addItem(); addItem();
+  recalc();
+}
+function newInvoice() { resetForm(); }
+function d2s(d) { return d.toISOString().split('T')[0]; }
+function nextNum() {
+  const pfx = CFG.prefix||'INV-';
+  const nums = DB.map(i => parseInt((i.number||'').replace(pfx,''))||0);
+  document.getElementById('f-num').value = pfx + String((nums.length?Math.max(...nums):0)+1).padStart(4,'0');
+}
+
+/* ITEMS */
+function addItem() {
+  const id = ++iid;
+  const tr = document.createElement('tr');
+  tr.id = 'ir-'+id;
+  tr.innerHTML = `<td><input type="text" placeholder="รายละเอียด" oninput="recalc()"></td>
+    <td><input type="number" value="1" min="0" inputmode="decimal" style="text-align:center" oninput="rowC(${id})"></td>
+    <td><input type="number" value="0" min="0" inputmode="decimal" style="text-align:right" oninput="rowC(${id})"></td>
+    <td style="text-align:right;font-weight:600;white-space:nowrap" id="irt-${id}">฿0.00</td>
+    <td><button class="del-row" onclick="delItem(${id})" type="button">×</button></td>`;
+  document.getElementById('itemsBody').appendChild(tr);
+  recalc();
+}
+function delItem(id) { const e=document.getElementById('ir-'+id); if(e){e.remove();recalc();} }
+function rowC(id) {
+  const r=document.getElementById('ir-'+id); if(!r) return;
+  const ins=r.querySelectorAll('input');
+  document.getElementById('irt-'+id).textContent = '฿'+((parseFloat(ins[1].value)||0)*(parseFloat(ins[2].value)||0)).toLocaleString('th-TH',{minimumFractionDigits:2});
+  recalc();
+}
+function getItems() {
+  return Array.from(document.querySelectorAll('#itemsBody tr')).map(r=>{
+    const ins=r.querySelectorAll('input');
+    return {desc:ins[0].value, qty:parseFloat(ins[1].value)||0, price:parseFloat(ins[2].value)||0};
+  }).filter(r=>r.desc||r.qty||r.price);
+}
+function recalc() {
+  document.getElementById('itemCount').textContent = document.querySelectorAll('#itemsBody tr').length;
+  const items=getItems(), sub=items.reduce((s,i)=>s+i.qty*i.price,0);
+  const disc=parseFloat(document.getElementById('f-disc').value)||0;
+  const vatP=parseFloat(document.getElementById('f-vat').value)||0;
+  const after=sub*(1-disc/100), vatA=after*vatP/100;
+  document.getElementById('t-sub').textContent = mo(sub);
+  document.getElementById('t-vat').textContent = mo(vatA);
+  document.getElementById('t-grand').textContent = mo(after+vatA);
+  if (window.innerWidth>=1025) renderPreview();
+}
+function mo(n) { return '฿'+n.toLocaleString('th-TH',{minimumFractionDigits:2}); }
+
+/* SAVE */
+function saveInv(st) {
+  const items=getItems(), sub=items.reduce((s,i)=>s+i.qty*i.price,0);
+  const disc=parseFloat(document.getElementById('f-disc').value)||0;
+  const vatP=parseFloat(document.getElementById('f-vat').value)||7;
+  const after=sub*(1-disc/100), vatA=after*vatP/100;
+  const inv={
+    id: editId||Date.now(),
+    number: document.getElementById('f-num').value||'INV-0000',
+    status: st||document.getElementById('f-status').value,
+    date: document.getElementById('f-date').value,
+    due: document.getElementById('f-due').value,
+    customer:{
+      name:document.getElementById('f-cname').value,
+      tax:document.getElementById('f-ctax').value,
+      address:document.getElementById('f-caddr').value,
+      phone:document.getElementById('f-cphone').value,
+      email:document.getElementById('f-cemail').value,
+    },
+    items, discount:disc, vat:vatP, note:document.getElementById('f-note').value,
+    subtotal:sub, vatAmt:vatA, grand:after+vatA,
+  };
+  if (editId) { const i=DB.findIndex(x=>x.id===editId); if(i>=0) DB[i]=inv; else DB.push(inv); }
+  else DB.push(inv);
+  save();
+  toast(st==='draft'?'💾 บันทึกฉบับร่างแล้ว':'✅ ออกใบเสร็จสำเร็จ','gold');
+  editId=null; showPage('list');
+}
+
+/* EDIT */
+function editInv(id) {
+  const inv=DB.find(i=>i.id===id); if(!inv) return;
+  editId=id; showPage('create');
+  document.getElementById('f-num').value=inv.number;
+  document.getElementById('f-status').value=inv.status;
+  document.getElementById('f-date').value=inv.date;
+  document.getElementById('f-due').value=inv.due;
+  document.getElementById('f-cname').value=inv.customer.name;
+  document.getElementById('f-ctax').value=inv.customer.tax;
+  document.getElementById('f-caddr').value=inv.customer.address;
+  document.getElementById('f-cphone').value=inv.customer.phone;
+  document.getElementById('f-cemail').value=inv.customer.email;
+  document.getElementById('f-disc').value=inv.discount;
+  document.getElementById('f-vat').value=inv.vat;
+  document.getElementById('f-note').value=inv.note;
+  document.getElementById('itemsBody').innerHTML=''; iid=0;
+  inv.items.forEach(item=>{
+    const id2=++iid, tr=document.createElement('tr'); tr.id='ir-'+id2;
+    tr.innerHTML=`<td><input type="text" value="${h(item.desc)}" oninput="recalc()"></td>
+      <td><input type="number" value="${item.qty}" inputmode="decimal" style="text-align:center" oninput="rowC(${id2})"></td>
+      <td><input type="number" value="${item.price}" inputmode="decimal" style="text-align:right" oninput="rowC(${id2})"></td>
+      <td style="text-align:right;font-weight:600;white-space:nowrap" id="irt-${id2}">฿${(item.qty*item.price).toLocaleString('th-TH',{minimumFractionDigits:2})}</td>
+      <td><button class="del-row" onclick="delItem(${id2})" type="button">×</button></td>`;
+    document.getElementById('itemsBody').appendChild(tr);
+  });
+  recalc();
+}
+function editCurrent() { if(previewId) editInv(previewId); }
+
+/* DELETE */
+function delInv(id) {
+  openModal('ยืนยันการลบ','ต้องการลบใบเสร็จนี้? ไม่สามารถย้อนกลับได้',()=>{
+    DB=DB.filter(i=>i.id!==id); save(); renderList(); renderDash();
+    toast('🗑️ ลบแล้ว'); closeModal();
+  });
+}
+
+/* VIEW */
+function viewInv(id) {
+  previewId=id;
+  const inv=DB.find(i=>i.id===id); if(!inv) return;
+  document.getElementById('fullPreview').innerHTML = buildInv(inv);
+  showPage('preview');
+}
+function renderPreview() {
+  const items=getItems(), sub=items.reduce((s,i)=>s+i.qty*i.price,0);
+  const disc=parseFloat(document.getElementById('f-disc').value)||0;
+  const vatP=parseFloat(document.getElementById('f-vat').value)||7;
+  const after=sub*(1-disc/100), vatA=after*vatP/100;
+  const inv={
+    number:document.getElementById('f-num').value||'INV-XXXX',
+    status:document.getElementById('f-status').value,
+    date:document.getElementById('f-date').value,
+    due:document.getElementById('f-due').value,
+    customer:{name:document.getElementById('f-cname').value||'ชื่อลูกค้า',tax:document.getElementById('f-ctax').value,address:document.getElementById('f-caddr').value,phone:document.getElementById('f-cphone').value,email:document.getElementById('f-cemail').value},
+    items,discount:disc,vat:vatP,note:document.getElementById('f-note').value,
+    subtotal:sub,vatAmt:vatA,grand:after+vatA,
+  };
+  document.getElementById('livePreview').innerHTML = buildInv(inv);
+}
+
+function buildInv(inv) {
+  const co=CFG;
+  const SL={draft:'ฉบับร่าง',pending:'รอชำระ',paid:'ชำระแล้ว',overdue:'เกินกำหนด'};
+  const SBG={draft:'#e2e3e5',pending:'#fff3cd',paid:'#d4edda',overdue:'#f8d7da'};
+  const SC={draft:'#383d41',pending:'#856404',paid:'#155724',overdue:'#721c24'};
+  const rows=(inv.items.length?inv.items:[{desc:'(ยังไม่มีรายการ)',qty:0,price:0}])
+    .map(i=>`<tr><td>${h(i.desc)}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">${mo(i.price)}</td><td style="text-align:right">${mo(i.qty*i.price)}</td></tr>`).join('');
+  return `<div class="invoice-doc">
+    <div class="inv-header">
+      <div class="inv-company">
+        <h2>${h(co.name||'ชื่อบริษัท')}</h2>
+        <p>${h(co.address||'').replace(/\n/g,'<br>')}</p>
+        <p>${co.phone||''}${co.email?' | '+co.email:''}</p>
+        ${co.tax?`<p>เลขผู้เสียภาษี: ${co.tax}</p>`:''}
+      </div>
+      <div class="inv-meta">
+        <div class="inv-title">ใบเสร็จรับเงิน</div>
+        <div class="inv-number">${inv.number}</div>
+        <table>
+          <tr><td>วันที่ออก</td><td>${inv.date||'-'}</td></tr>
+          <tr><td>ครบกำหนด</td><td>${inv.due||'-'}</td></tr>
+          <tr><td>สถานะ</td><td><span style="background:${SBG[inv.status]||'#eee'};color:${SC[inv.status]||'#333'};padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700">${SL[inv.status]||''}</span></td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="inv-divider"></div>
+    <div class="inv-parties">
+      <div class="inv-party"><h4>ออกให้แก่</h4>
+        <p><strong>${h(inv.customer.name)}</strong>
+        ${inv.customer.tax?`เลขผู้เสียภาษี: ${inv.customer.tax}<br>`:''}
+        ${h(inv.customer.address||'').replace(/\n/g,'<br>')}</p>
+        ${inv.customer.phone?`<p>โทร: ${inv.customer.phone}</p>`:''}
+      </div>
+      <div class="inv-party"><h4>ผู้ออกใบเสร็จ</h4>
+        <p><strong>${h(co.name||'ชื่อบริษัท')}</strong>${h(co.address||'').replace(/\n/g,'<br>')}</p>
+      </div>
+    </div>
+    <div class="inv-table-wrap">
+      <table class="inv-table">
+        <thead><tr><th>รายละเอียด</th><th style="text-align:center">จำนวน</th><th style="text-align:right">ราคา/หน่วย</th><th style="text-align:right">รวม</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="inv-totals">
+      <div class="row"><span>ยอดรวมก่อนภาษี</span><span>${mo(inv.subtotal)}</span></div>
+      ${inv.discount?`<div class="row"><span>ส่วนลด (${inv.discount}%)</span><span>-${mo(inv.subtotal*inv.discount/100)}</span></div>`:''}
+      <div class="row"><span>VAT (${inv.vat}%)</span><span>${mo(inv.vatAmt)}</span></div>
+      <div class="row grand"><span>ยอดสุทธิ</span><span>${mo(inv.grand)}</span></div>
+    </div>
+    <div class="inv-footer">
+      <div class="inv-note">${inv.note?`<strong>หมายเหตุ:</strong><br>${h(inv.note).replace(/\n/g,'<br>')}` :'<span style="color:#bbb">— ไม่มีหมายเหตุ —</span>'}</div>
+      <div class="inv-sig"><div class="sig-line"></div><p>ลายเซ็นผู้รับเงิน</p><p style="margin-top:3px;font-weight:600">${h(co.name||'')}</p></div>
+    </div>
+  </div>`;
+}
+
+/* DASHBOARD */
+function renderDash() {
+  const total=DB.reduce((s,i)=>s+(i.grand||0),0);
+  const paid=DB.filter(i=>i.status==='paid'), pend=DB.filter(i=>i.status==='pending'), over=DB.filter(i=>i.status==='overdue');
+  const $=(id,v)=>document.getElementById(id).textContent=v;
+  $('s-total','฿'+total.toLocaleString('th-TH',{maximumFractionDigits:0}));
+  $('s-cnt',DB.length+' ใบ');
+  $('s-paid','฿'+paid.reduce((s,i)=>s+(i.grand||0),0).toLocaleString('th-TH',{maximumFractionDigits:0}));
+  $('s-paid-c',paid.length+' รายการ');
+  $('s-pend','฿'+pend.reduce((s,i)=>s+(i.grand||0),0).toLocaleString('th-TH',{maximumFractionDigits:0}));
+  $('s-pend-c',pend.length+' รายการ');
+  $('s-over','฿'+over.reduce((s,i)=>s+(i.grand||0),0).toLocaleString('th-TH',{maximumFractionDigits:0}));
+  $('s-over-c',over.length+' รายการ');
+  const recent=[...DB].reverse().slice(0,6);
+  document.getElementById('dashBody').innerHTML = recent.length
+    ? recent.map(inv=>`<tr>
+        <td style="font-weight:700">${inv.number}</td>
+        <td>${h(inv.customer.name||'-')}</td>
+        <td style="white-space:nowrap">${inv.date}</td>
+        <td style="font-weight:600;white-space:nowrap">${mo(inv.grand||0)}</td>
+        <td>${bdg(inv.status)}</td>
+        <td><button class="btn btn-outline btn-sm" onclick="viewInv(${inv.id})" type="button">ดู</button></td>
+      </tr>`).join('')
+    : `<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--muted)">ยังไม่มีรายการ</td></tr>`;
+}
+
+/* LIST */
+function renderList() {
+  const q=(document.getElementById('searchQ')?.value||'').toLowerCase();
+  const fil=DB.filter(i=>i.number.toLowerCase().includes(q)||(i.customer.name||'').toLowerCase().includes(q)).reverse();
+  document.getElementById('emptyMsg').style.display=fil.length?'none':'block';
+  document.getElementById('listBody').innerHTML=fil.map(inv=>`<tr>
+    <td style="font-weight:700;white-space:nowrap">${inv.number}</td>
+    <td>${h(inv.customer.name||'-')}</td>
+    <td style="white-space:nowrap">${inv.date}</td>
+    <td style="font-weight:600;white-space:nowrap">${mo(inv.grand||0)}</td>
+    <td>${bdg(inv.status)}</td>
+    <td><div class="action-btns">
+      <button class="btn btn-outline btn-sm" onclick="viewInv(${inv.id})" type="button">👁</button>
+      <button class="btn btn-outline btn-sm" onclick="editInv(${inv.id})" type="button">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="delInv(${inv.id})" type="button">🗑</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function bdg(s) {
+  const C={draft:'badge-draft',pending:'badge-pending',paid:'badge-paid',overdue:'badge-overdue'};
+  const L={draft:'ร่าง',pending:'รอชำระ',paid:'ชำระแล้ว',overdue:'เกินกำหนด'};
+  return `<span class="badge ${C[s]||''}">${L[s]||s}</span>`;
+}
+
+/* SETTINGS */
+function loadCFG() {
+  document.getElementById('s-name').value=CFG.name||'';
+  document.getElementById('s-tax').value=CFG.tax||'';
+  document.getElementById('s-addr').value=CFG.address||'';
+  document.getElementById('s-phone').value=CFG.phone||'';
+  document.getElementById('s-email').value=CFG.email||'';
+  document.getElementById('s-web').value=CFG.web||'';
+  document.getElementById('s-prefix').value=CFG.prefix||'INV-';
+}
+function saveSettings() {
+  CFG={
+    name:document.getElementById('s-name').value,
+    tax:document.getElementById('s-tax').value,
+    address:document.getElementById('s-addr').value,
+    phone:document.getElementById('s-phone').value,
+    email:document.getElementById('s-email').value,
+    web:document.getElementById('s-web').value,
+    prefix:document.getElementById('s-prefix').value||'INV-',
+  };
+  localStorage.setItem('invCFG',JSON.stringify(CFG));
+  const b=document.getElementById('sidebarBrand');
+  if(b) b.textContent=CFG.name||'InvoicePro';
+  toast('✅ บันทึกข้อมูลบริษัทแล้ว','gold');
+}
+
+/* UTILS */
+function h(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function save(){ localStorage.setItem('invDB',JSON.stringify(DB)); }
+function openModal(t,m,cb){ document.getElementById('mTitle').textContent=t; document.getElementById('mMsg').textContent=m; document.getElementById('mOk').onclick=cb; document.getElementById('modalBg').classList.add('open'); }
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
+function toast(msg,cls){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='toast'+(cls?' '+cls:'');
+  void el.offsetWidth; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2600);
+}
+</script>
+</body>
+</html>
